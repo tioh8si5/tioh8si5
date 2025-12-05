@@ -731,10 +731,10 @@
                 s.soldiers.forEach((soldier, idx) => {
                     ctx.fillStyle = idx === 0 ? '#4ade80' : '#22c55e';
                     ctx.beginPath();
-                    ctx.arc(soldier.x, soldier.y, 8, 0, Math.PI*2);
+                    ctx.arc(soldier.x, soldier.y, 12, 0, Math.PI*2);
                     ctx.fill();
                     ctx.fillStyle = 'black';
-                    ctx.font = '10px Arial';
+                    ctx.font = '16px Arial';
                     ctx.textAlign = 'center';
                     ctx.textBaseline = 'middle';
                     ctx.fillText('🪖', soldier.x, soldier.y);
