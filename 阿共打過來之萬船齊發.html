@@ -500,8 +500,9 @@
                     this.state.obstacles.push({
                         x: obsX,
                         y: obsY,
-                        w: 40 + Math.random() * 40, // 隨機寬度
-                        h: 40 + Math.random() * 40  // 隨機高度
+                        // 修改：調整障礙物大小，約 40~70px，與放大後的士兵相當
+                        w: 40 + Math.random() * 30, 
+                        h: 40 + Math.random() * 30
                     });
                 }
 
@@ -509,7 +510,7 @@
                 for (let i = 0; i < 6; i++) {
                     this.state.soldiers.push({
                         x: center.x, 
-                        y: center.y + i * 15, 
+                        y: center.y + i * 25, // 初始間距拉大
                         history: [] 
                     });
                 }
@@ -596,9 +597,11 @@
 
                         // 碰撞偵測 (障礙物)
                         let hit = false;
+                        const r = 20; // 士兵半徑
                         for(let obs of s.obstacles) {
-                            if (nextX > obs.x && nextX < obs.x + obs.w &&
-                                nextY > obs.y && nextY < obs.y + obs.h) {
+                            // 簡單矩形碰撞，考慮士兵半徑
+                            if (nextX + r > obs.x && nextX - r < obs.x + obs.w &&
+                                nextY + r > obs.y && nextY - r < obs.y + obs.h) {
                                 hit = true;
                                 break;
                             }
@@ -615,7 +618,6 @@
                 }
 
                 // 2. 隊員跟隨
-                const gap = 12;
                 for(let i=1; i<s.soldiers.length; i++) {
                     const prevSoldier = s.soldiers[i-1];
                     const me = s.soldiers[i];
@@ -624,27 +626,26 @@
                     const pdy = prevSoldier.y - me.y;
                     const pdist = Math.sqrt(pdx*pdx + pdy*pdy);
                     
-                    if(pdist > 20) { 
+                    // 修改：增加間距判定，因為士兵變大了 (半徑20 * 2 = 40，稍微重疊一點設為 35)
+                    if(pdist > 35) { 
                         me.x += (pdx / pdist) * 2.5; 
                         me.y += (pdy / pdist) * 2.5;
                     }
                 }
 
                 // 3. 生成砲擊 (密集化)
-                // 頻率：每 0.5 秒 (30 frames)
                 if (s.frameCount % 30 === 0) { 
-                    const count = Math.random() > 0.5 ? 3 : 2; // 一次 2-3 發
+                    const count = Math.random() > 0.5 ? 3 : 2; 
                     for(let i=0; i<count; i++) {
-                        // 新增：隨機賦予震波屬性
-                        const isShockwave = Math.random() > 0.7; // 30% 機率
+                        const isShockwave = Math.random() > 0.7; 
                         
                         s.explosions.push({
                             x: Math.random() * this.canvas.width,
                             y: Math.random() * this.canvas.height,
-                            radius: 30 + Math.random() * 20, // 爆炸半徑略減，但數量多
-                            timer: 90, // 1.5秒預警
+                            radius: 30 + Math.random() * 20,
+                            timer: 90, 
                             stage: 'warn',
-                            hasShockwave: isShockwave, // 標記震波
+                            hasShockwave: isShockwave, 
                             shockwaveRadius: 0
                         });
                     }
@@ -716,7 +717,8 @@
                             for (let j = s.soldiers.length - 1; j >= 0; j--) {
                                 const soldier = s.soldiers[j];
                                 const dist = Math.sqrt((soldier.x - e.x)**2 + (soldier.y - e.y)**2);
-                                if (dist < e.radius) {
+                                // 判定半徑加上士兵體積
+                                if (dist < e.radius + 20) {
                                     s.soldiers.splice(j, 1);
                                     this.addNews("戰報：我方士兵陣亡！");
                                 }
@@ -727,14 +729,16 @@
                     }
                 }
 
-                // 畫士兵
+                // 畫士兵 (修改：放大)
                 s.soldiers.forEach((soldier, idx) => {
                     ctx.fillStyle = idx === 0 ? '#4ade80' : '#22c55e';
                     ctx.beginPath();
-                    ctx.arc(soldier.x, soldier.y, 12, 0, Math.PI*2);
+                    // 修改：半徑從 8 改為 20
+                    ctx.arc(soldier.x, soldier.y, 20, 0, Math.PI*2);
                     ctx.fill();
                     ctx.fillStyle = 'black';
-                    ctx.font = '16px Arial';
+                    // 修改：字體放大
+                    ctx.font = '24px Arial';
                     ctx.textAlign = 'center';
                     ctx.textBaseline = 'middle';
                     ctx.fillText('🪖', soldier.x, soldier.y);
