@@ -1,712 +1,738 @@
-import React, { useState, useEffect, useRef } from 'react';
-
-// --- 1. 內建 SVG 圖示元件 (純 JSX 版本，確保零依賴) ---
-const Icons = {
-  Crosshair: ({ className }) => (
-    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
-      <circle cx="12" cy="12" r="10"/><line x1="22" y1="12" x2="18" y2="12"/><line x1="6" y1="12" x2="2" y2="12"/><line x1="12" y1="6" x2="12" y2="2"/><line x1="12" y1="22" x2="12" y2="18"/>
-    </svg>
-  ),
-  Target: ({ className, size = 24 }) => (
-    <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
-      <circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/>
-    </svg>
-  ),
-  Info: ({ className, size = 24 }) => (
-    <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
-      <circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/>
-    </svg>
-  ),
-  RotateCcw: ({ className, size = 24 }) => (
-    <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
-      <path d="M1 4v6h6"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/>
-    </svg>
-  ),
-  Home: ({ className, size = 24 }) => (
-    <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
-      <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/>
-    </svg>
-  ),
-  Play: ({ className, size = 24, fill = "none" }) => (
-    <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill={fill} stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
-      <polygon points="5 3 19 12 5 21 5 3"/>
-    </svg>
-  ),
-  BookOpen: ({ className, size = 24 }) => (
-    <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
-      <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/>
-    </svg>
-  ),
-  Book: ({ className, size = 24 }) => (
-    <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
-      <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/>
-      <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/>
-    </svg>
-  ),
-  ChevronDown: ({ className, size = 24 }) => (
-    <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
-      <polyline points="6 9 12 15 18 9"/>
-    </svg>
-  ),
-  RefreshCw: ({ className, size = 24 }) => (
-    <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
-      <polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/>
-    </svg>
-  ),
-  X: ({ className, size = 24 }) => (
-    <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
-      <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
-    </svg>
-  ),
-  HelpCircle: ({ className, size = 24 }) => (
-    <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
-      <circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/>
-    </svg>
-  ),
-  ArrowRight: ({ className, size = 24 }) => (
-    <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
-      <line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/>
-    </svg>
-  ),
-  MousePointer2: ({ className, size = 24 }) => (
-    <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
-      <path d="M3 3l7.07 16.97 2.51-7.39 7.39-2.51L3 3z"/><path d="M13 13l6 6"/>
-    </svg>
-  )
-};
-
-// --- 2. 遊戲常數與數據 ---
-const CANVAS_WIDTH = 800;
-const CANVAS_HEIGHT = 500;
-const SCALE = 2; // 1px = 1公尺
-
-const PROBABILITY_DATA = [
-  { count: 1, miss: "50%", hit: "50%" },
-  { count: 2, miss: "25% (0.5²)", hit: "75%" },
-  { count: 3, miss: "12.5% (0.5³)", hit: "87.5%" },
-  { count: 4, miss: "6.25%", hit: "93.75%" },
-  { count: 5, miss: "3.125%", hit: "96.875%" }
-];
-
-// Level 1: 跑道地圖 (用作基礎)
-const RUNWAY_WIDTH = 600;
-const RUNWAY_HEIGHT = 40; 
-const RUNWAY_OBJ = {
-  id: 'runway',
-  name: '機場跑道',
-  x: (CANVAS_WIDTH - RUNWAY_WIDTH) / 2,
-  y: (CANVAS_HEIGHT - RUNWAY_HEIGHT) / 2,
-  width: RUNWAY_WIDTH,
-  height: RUNWAY_HEIGHT,
-  type: 'military',
-  color: '#6b7280'
-};
-
-// Level 2: 城鎮 (固定配置)
-const TOWN_WIDTH = 400;
-const TOWN_HEIGHT = 300;
-const TOWN_X = (CANVAS_WIDTH - TOWN_WIDTH) / 2;
-const TOWN_Y = (CANVAS_HEIGHT - TOWN_HEIGHT) / 2;
-
-const TOWN_OBJECTS = [
-  // 中心軍事目標
-  { id: 'enemy_hq', name: '敵軍指揮所', x: CANVAS_WIDTH/2 - 20, y: CANVAS_HEIGHT/2 - 20, width: 40, height: 40, type: 'military', color: '#dc2626' },
-  // 固定民房
-  { id: 'h1', name: '民宅', x: TOWN_X + 50, y: TOWN_Y + 50, width: 30, height: 30, type: 'civilian', color: '#16a34a' },
-  { id: 'h2', name: '民宅', x: TOWN_X + 100, y: TOWN_Y + 80, width: 30, height: 30, type: 'civilian', color: '#16a34a' },
-  { id: 'h3', name: '民宅', x: TOWN_X + 300, y: TOWN_Y + 60, width: 30, height: 30, type: 'civilian', color: '#16a34a' },
-  { id: 'h4', name: '民宅', x: TOWN_X + 60, y: TOWN_Y + 200, width: 30, height: 30, type: 'civilian', color: '#16a34a' },
-  { id: 'h5', name: '民宅', x: TOWN_X + 250, y: TOWN_Y + 220, width: 30, height: 30, type: 'civilian', color: '#16a34a' },
-  { id: 'h6', name: '民宅', x: TOWN_X + 320, y: TOWN_Y + 180, width: 30, height: 30, type: 'civilian', color: '#16a34a' },
-  { id: 'h7', name: '民宅', x: TOWN_X + 150, y: TOWN_Y + 150, width: 30, height: 30, type: 'civilian', color: '#16a34a' },
-  { id: 'h8', name: '民宅', x: TOWN_X + 200, y: TOWN_Y + 40, width: 30, height: 30, type: 'civilian', color: '#16a34a' },
-  { id: 'h9', name: '民宅', x: TOWN_X + 20, y: TOWN_Y + 120, width: 30, height: 30, type: 'civilian', color: '#16a34a' },
-  { id: 'h10', name: '民宅', x: TOWN_X + 350, y: TOWN_Y + 250, width: 30, height: 30, type: 'civilian', color: '#16a34a' },
-  { id: 'h11', name: '民宅', x: TOWN_X + 180, y: TOWN_Y + 260, width: 30, height: 30, type: 'civilian', color: '#16a34a' },
-];
-
-// Level 3: 城市 (博愛特區)
-const CITY_CENTER_X = CANVAS_WIDTH / 2;
-const CITY_CENTER_Y = CANVAS_HEIGHT / 2;
-const CITY_OBJECTS = [
-  // 軍事設施
-  { id: 'presidential_office', name: '總統府 (目標)', x: 340, y: 210, width: 120, height: 80, type: 'military', color: '#ef4444' },
-  // 民用設施
-  { id: 'school', name: '北一女中', x: 480, y: 310, width: 100, height: 80, type: 'civilian', color: '#10b981' },
-  { id: 'judicial', name: '司法院', x: 320, y: 320, width: 90, height: 60, type: 'civilian', color: '#059669' },
-  { id: 'museum', name: '國史館', x: 150, y: 220, width: 70, height: 70, type: 'civilian', color: '#34d399' },
-  { id: 'park', name: '二二八公園', x: 540, y: 40, width: 120, height: 100, type: 'civilian', color: '#86efac' }
-];
-
-const LEVELS = [
-  {
-    id: 1,
-    title: "Level 1: 觀念解析 - 什麼是 CEP？",
-    shortTitle: "觀念解析：什麼是 CEP？",
-    mapType: 'explanation',
-    cep: 100,
-    missileCount: 0,
-    description: "【基礎觀念】在開始模擬前，我們先了解一個核心概念：CEP (圓周誤差率)。\n這不是「必中」的保證，而是一個「機率」的統計數據。\n本關卡將演示 CEP 的真實定義。",
-    quote: "CEP的概念是機率...一枚彈道飛彈CEP 100m，代表發射兩枚，統計上會有一枚落在半徑100公尺圓內，若發射一百枚就是有五十枚會落在這個圓形內。",
-    color: "bg-indigo-500"
-  },
-  {
-    id: 2,
-    title: "Level 2: CEP 的殘酷現實",
-    shortTitle: "現實體驗：轟炸小鎮",
-    mapType: 'town',
-    cep: 100,
-    userCanSetCep: true,
-    missileCount: 10,
-    description: "【命中率實驗】目標是小鎮中央的軍事設施（紅色），周圍有固定分佈的民宅（綠色）。\n請試著切換「傳說 (CEP=0)」與「現實 (CEP=100)」模式，體驗在誤差下要避開民宅擊中目標有多困難。",
-    quote: "飛彈在跑道上空爆炸...如果落到民宅，真的會造成毀損。一般平房或是透天厝，大概只能躲到地下室才能逃過一劫。",
-    color: "bg-blue-500"
-  },
-  {
-    id: 3,
-    title: "Level 3: 轟炸總統府 (附帶損傷)",
-    shortTitle: "實戰模擬：博愛特區",
-    mapType: 'city',
-    cep: 100,
-    missileCount: 15,
-    description: "【實戰模擬】如果目標是總統府？\n地圖換成博愛特區。在現實 CEP 下，要炸毀總統府，你敢保證不炸到旁邊的北一女中或醫院嗎？",
-    quote: "瞄準都市區域內的政府、軍事機關，一個不小心不就砸到旁邊的民間單位...右下角好像有一間學校。",
-    color: "bg-slate-700"
-  }
-];
-
-// --- 3. 主應用程式元件 ---
-export default function App() {
-  const canvasRef = useRef(null);
-  const [currentLevel, setCurrentLevel] = useState(0);
-  const [missilesLeft, setMissilesLeft] = useState(LEVELS[0].missileCount);
-  const [craters, setCraters] = useState([]);
-  const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
-  const [logs, setLogs] = useState([]);
-  const [gameState, setGameState] = useState('menu');
-  const [showBriefing, setShowBriefing] = useState(true);
-  
-  const [selectedCep, setSelectedCep] = useState(LEVELS[0].cep);
-  const [explanationMissileCount, setExplanationMissileCount] = useState(1);
-  const [showCepModal, setShowCepModal] = useState(false);
-
-  // Level 1: 彈著點狀態
-  const [explanationDots, setExplanationDots] = useState([]);
-  
-  // 初始化關卡
-  const startLevel = (levelIndex) => {
-    setCurrentLevel(levelIndex);
-    const level = LEVELS[levelIndex];
-    setMissilesLeft(level.missileCount);
-    setSelectedCep(level.cep);
-    setCraters([]);
-    setLogs([]);
-    setGameState('playing');
-    setShowBriefing(true);
-    setShowCepModal(false);
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>飛彈模擬器：CEP 的現實</title>
+    <!-- 引入 Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- 引入 React 和 ReactDOM -->
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <!-- 引入 Babel 用於瀏覽器內編譯 JSX -->
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
     
-    // Level 1 重置
-    if (level.mapType === 'explanation') {
-      setExplanationDots([]);
-      setExplanationMissileCount(1);
-      // 延遲執行確保 DOM 準備好
-      setTimeout(() => simulateOneVolley(1), 100);
-    }
-  };
-
-  const returnToMenu = () => {
-    setGameState('menu');
-  };
-
-  // Level 1: 模擬射擊 (單次顯示)
-  const simulateOneVolley = (count) => {
-    const centerX = CANVAS_WIDTH / 2;
-    const centerY = CANVAS_HEIGHT / 2 - 110; 
-    const cepRadius = 70; 
-    
-    const newDots = [];
-
-    for (let i = 0; i < count; i++) {
-      const isInside = Math.random() < 0.5;
-      let r, theta;
-      theta = Math.random() * 2 * Math.PI;
-      
-      if (isInside) {
-         // 在圓內均勻分佈
-         r = Math.sqrt(Math.random()) * cepRadius;
-      } else {
-         // 在圓外 (1.0 ~ 2.5 倍半徑)
-         r = cepRadius + Math.sqrt(Math.random()) * (cepRadius * 1.5);
-      }
-
-      const x = centerX + r * Math.cos(theta);
-      const y = centerY + r * Math.sin(theta);
-      newDots.push({ x, y, inside: isInside });
-    }
-    setExplanationDots(newDots);
-  };
-
-  // 監聽說明數量改變
-  useEffect(() => {
-    if (gameState === 'playing' && LEVELS[currentLevel].mapType === 'explanation') {
-      simulateOneVolley(explanationMissileCount);
-    }
-  }, [explanationMissileCount, gameState, currentLevel]);
-
-  // 繪圖邏輯
-  useEffect(() => {
-    if (gameState === 'menu' || gameState === 'bibliography') return;
-
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return;
-    
-    const config = LEVELS[currentLevel];
-
-    // 清空背景
-    ctx.clearRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
-    ctx.fillStyle = '#e5e7eb';
-    ctx.fillRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
-
-    // --- LEVEL 1: 觀念演示 ---
-    if (config.mapType === 'explanation') {
-      const cx = CANVAS_WIDTH / 2;
-      const cy = CANVAS_HEIGHT / 2 - 110; 
-      const r = 70;
-
-      // 目標點
-      ctx.beginPath();
-      ctx.arc(cx, cy, 3, 0, Math.PI * 2);
-      ctx.fillStyle = '#999';
-      ctx.fill();
-      
-      // CEP 圓圈
-      ctx.beginPath();
-      ctx.arc(cx, cy, r, 0, Math.PI * 2);
-      ctx.strokeStyle = '#3b82f6';
-      ctx.lineWidth = 3;
-      ctx.setLineDash([10, 5]);
-      ctx.stroke();
-      ctx.setLineDash([]);
-      ctx.fillStyle = 'rgba(59, 130, 246, 0.05)';
-      ctx.fill();
-
-      // 文字
-      ctx.fillStyle = '#1e3a8a';
-      ctx.font = 'bold 16px Arial';
-      ctx.textAlign = 'center';
-      ctx.fillText(`CEP 半徑 (50% 機率)`, cx, cy - r - 15);
-
-      // 彈著點
-      explanationDots.forEach(dot => {
-        ctx.beginPath();
-        ctx.arc(dot.x, dot.y, 6, 0, Math.PI * 2); 
-        if (dot.inside) {
-          ctx.fillStyle = 'rgba(239, 68, 68, 0.9)'; // 紅色 (中)
-        } else {
-          ctx.fillStyle = 'rgba(0, 0, 0, 0.7)'; // 黑色 (不中)
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&display=swap');
+        body {
+            font-family: 'Noto Sans TC', sans-serif;
         }
-        ctx.fill();
-        ctx.strokeStyle = '#fff';
-        ctx.lineWidth = 1;
-        ctx.stroke();
-      });
-      return; 
-    }
+        /* 自定義淡入動畫 */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .animate-fadeIn {
+            animation: fadeIn 0.5s ease-out forwards;
+        }
+    </style>
+</head>
+<body class="bg-gray-100 text-gray-800">
+    <div id="root"></div>
 
-    // --- LEVEL 2 & 3 ---
-    let targets = [];
-    if (config.mapType === 'town') {
-      // 繪製城鎮底板
-      ctx.fillStyle = 'rgba(251, 191, 36, 0.2)'; 
-      ctx.fillRect(TOWN_X, TOWN_Y, TOWN_WIDTH, TOWN_HEIGHT);
-      ctx.strokeStyle = '#d97706';
-      ctx.lineWidth = 2;
-      ctx.strokeRect(TOWN_X, TOWN_Y, TOWN_WIDTH, TOWN_HEIGHT);
-      
-      // 尺寸
-      ctx.fillStyle = '#d97706';
-      ctx.font = '12px Arial';
-      ctx.textAlign = 'center';
-      ctx.fillText(`${TOWN_WIDTH}m`, TOWN_X + TOWN_WIDTH / 2, TOWN_Y - 5);
-      ctx.textAlign = 'right';
-      ctx.fillText(`${TOWN_HEIGHT}m`, TOWN_X - 5, TOWN_Y + TOWN_HEIGHT / 2);
-      
-      targets = TOWN_OBJECTS;
-    } else if (config.mapType === 'city') {
-      // 繪製街道
-      ctx.strokeStyle = '#d1d5db';
-      ctx.lineWidth = 10;
-      ctx.beginPath();
-      ctx.moveTo(CITY_CENTER_X - 120, 0); ctx.lineTo(CITY_CENTER_X - 120, CANVAS_HEIGHT);
-      ctx.moveTo(CITY_CENTER_X + 20, 0); ctx.lineTo(CITY_CENTER_X + 20, CANVAS_HEIGHT);
-      ctx.moveTo(0, CITY_CENTER_Y); ctx.lineTo(CANVAS_WIDTH, CITY_CENTER_Y);
-      ctx.moveTo(0, CITY_CENTER_Y + 110); ctx.lineTo(CANVAS_WIDTH, CITY_CENTER_Y + 110);
-      ctx.stroke();
-      targets = CITY_OBJECTS;
-    } else if (config.mapType === 'runway') {
-      targets = [RUNWAY_OBJ];
-      // 跑道線
-      ctx.strokeStyle = '#ffffff';
-      ctx.setLineDash([20, 10]);
-      ctx.beginPath();
-      ctx.moveTo(RUNWAY_OBJ.x, RUNWAY_OBJ.y + RUNWAY_OBJ.height / 2);
-      ctx.lineTo(RUNWAY_OBJ.x + RUNWAY_OBJ.width, RUNWAY_OBJ.y + RUNWAY_OBJ.height / 2);
-      ctx.stroke();
-      ctx.setLineDash([]);
-    }
+    <script type="text/babel">
+        const { useState, useEffect, useRef } = React;
 
-    // 繪製物件
-    targets.forEach(obj => {
-      ctx.fillStyle = obj.color;
-      ctx.fillRect(obj.x, obj.y, obj.width, obj.height);
-      ctx.strokeStyle = 'rgba(0,0,0,0.2)';
-      ctx.lineWidth = 2;
-      ctx.strokeRect(obj.x, obj.y, obj.width, obj.height);
-      
-      ctx.fillStyle = 'white';
-      if (obj.type === 'town_area') ctx.fillStyle = '#b45309'; 
-      ctx.font = 'bold 12px Arial';
-      ctx.textAlign = 'center';
-      // 顯示所有名稱
-      ctx.fillText(obj.name, obj.x + obj.width / 2, obj.y + obj.height / 2 + 4);
-    });
+        // --- 1. 內建 SVG 圖示元件 ---
+        const Icons = {
+            Crosshair: ({ className }) => (
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+                    <circle cx="12" cy="12" r="10"/><line x1="22" y1="12" x2="18" y2="12"/><line x1="6" y1="12" x2="2" y2="12"/><line x1="12" y1="6" x2="12" y2="2"/><line x1="12" y1="22" x2="12" y2="18"/>
+                </svg>
+            ),
+            Target: ({ className, size = 24 }) => (
+                <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+                    <circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/>
+                </svg>
+            ),
+            Info: ({ className, size = 24 }) => (
+                <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+                    <circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/>
+                </svg>
+            ),
+            RotateCcw: ({ className, size = 24 }) => (
+                <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+                    <path d="M1 4v6h6"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/>
+                </svg>
+            ),
+            Home: ({ className, size = 24 }) => (
+                <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+                    <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/>
+                </svg>
+            ),
+            Play: ({ className, size = 24, fill = "none" }) => (
+                <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill={fill} stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+                    <polygon points="5 3 19 12 5 21 5 3"/>
+                </svg>
+            ),
+            BookOpen: ({ className, size = 24 }) => (
+                <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+                    <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/>
+                </svg>
+            ),
+            ChevronDown: ({ className, size = 24 }) => (
+                <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+                    <polyline points="6 9 12 15 18 9"/>
+                </svg>
+            ),
+            RefreshCw: ({ className, size = 24 }) => (
+                <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+                    <polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/>
+                </svg>
+            ),
+            X: ({ className, size = 24 }) => (
+                <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+                    <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+                </svg>
+            ),
+            HelpCircle: ({ className, size = 24 }) => (
+                <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+                    <circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/>
+                </svg>
+            ),
+            ArrowRight: ({ className, size = 24 }) => (
+                <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+                    <line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/>
+                </svg>
+            ),
+            MousePointer2: ({ className, size = 24 }) => (
+                <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+                    <path d="M3 3l7.07 16.97 2.51-7.39 7.39-2.51L3 3z"/><path d="M13 13l6 6"/>
+                </svg>
+            )
+        };
 
-    // 繪製彈坑
-    craters.forEach(crater => {
-      ctx.beginPath();
-      ctx.arc(crater.x, crater.y, 15, 0, Math.PI * 2);
-      if (crater.hitResult === 'civilian') ctx.fillStyle = 'rgba(239, 68, 68, 0.8)';
-      else if (crater.hitResult === 'hit') ctx.fillStyle = 'rgba(0, 0, 0, 0.8)';
-      else ctx.fillStyle = 'rgba(107, 114, 128, 0.5)';
-      ctx.fill();
-      ctx.strokeStyle = '#fff';
-      ctx.lineWidth = 1;
-      ctx.stroke();
-    });
+        // --- 2. 遊戲常數與數據 ---
+        const CANVAS_WIDTH = 800;
+        const CANVAS_HEIGHT = 500;
+        const SCALE = 2; // 1px = 1公尺
 
-    // 繪製準心
-    if (gameState === 'playing' && !showBriefing && missilesLeft > 0) {
-      ctx.beginPath();
-      ctx.arc(mousePos.x, mousePos.y, 5, 0, Math.PI * 2);
-      ctx.fillStyle = 'red';
-      ctx.fill();
-      
-      if (selectedCep > 0) {
-        ctx.beginPath();
-        ctx.arc(mousePos.x, mousePos.y, selectedCep * SCALE / 2, 0, Math.PI * 2);
-        ctx.strokeStyle = 'rgba(239, 68, 68, 0.4)';
-        ctx.lineWidth = 2;
-        ctx.setLineDash([5, 5]);
-        ctx.stroke();
-        ctx.setLineDash([]);
-        ctx.fillStyle = 'rgba(239, 68, 68, 0.05)';
-        ctx.fill();
-        ctx.fillStyle = '#dc2626';
-        ctx.font = '12px Arial';
-        ctx.textAlign = 'left';
-        ctx.fillText(`CEP: ${selectedCep}m`, mousePos.x + 10, mousePos.y - 10);
-      } else {
-        ctx.fillStyle = '#dc2626';
-        ctx.font = '12px Arial';
-        ctx.textAlign = 'left';
-        ctx.fillText(`CEP: 0m`, mousePos.x + 10, mousePos.y - 10);
-      }
-    }
-  }, [craters, mousePos, currentLevel, gameState, showBriefing, missilesLeft, selectedCep, explanationDots]);
+        const PROBABILITY_DATA = [
+            { count: 1, miss: "50%", hit: "50%" },
+            { count: 2, miss: "25% (0.5²)", hit: "75%" },
+            { count: 3, miss: "12.5% (0.5³)", hit: "87.5%" },
+            { count: 4, miss: "6.25%", hit: "93.75%" },
+            { count: 5, miss: "3.125%", hit: "96.875%" }
+        ];
 
-  // 滑鼠移動
-  const handleMouseMove = (e) => {
-    if (gameState !== 'playing' || LEVELS[currentLevel].mapType === 'explanation') return;
-    const rect = canvasRef.current?.getBoundingClientRect();
-    if (rect) {
-      setMousePos({
-        x: e.clientX - rect.left,
-        y: e.clientY - rect.top
-      });
-    }
-  };
+        // Level 1: 跑道地圖 (用作基礎)
+        const RUNWAY_WIDTH = 600;
+        const RUNWAY_HEIGHT = 40; 
+        const RUNWAY_OBJ = {
+            id: 'runway',
+            name: '機場跑道',
+            x: (CANVAS_WIDTH - RUNWAY_WIDTH) / 2,
+            y: (CANVAS_HEIGHT - RUNWAY_HEIGHT) / 2,
+            width: RUNWAY_WIDTH,
+            height: RUNWAY_HEIGHT,
+            type: 'military',
+            color: '#6b7280'
+        };
 
-  // 發射飛彈
-  const handleFire = () => {
-    if (missilesLeft <= 0 || showBriefing || LEVELS[currentLevel].mapType === 'explanation') return;
-    setMissilesLeft(prev => prev - 1);
+        // Level 2: 城鎮 (固定配置)
+        const TOWN_WIDTH = 400;
+        const TOWN_HEIGHT = 300;
+        const TOWN_X = (CANVAS_WIDTH - TOWN_WIDTH) / 2;
+        const TOWN_Y = (CANVAS_HEIGHT - TOWN_HEIGHT) / 2;
 
-    let deviationX = 0;
-    let deviationY = 0;
+        const TOWN_OBJECTS = [
+            { id: 'enemy_hq', name: '敵軍指揮所', x: CANVAS_WIDTH/2 - 20, y: CANVAS_HEIGHT/2 - 20, width: 40, height: 40, type: 'military', color: '#dc2626' },
+            { id: 'h1', name: '民宅', x: TOWN_X + 50, y: TOWN_Y + 50, width: 30, height: 30, type: 'civilian', color: '#16a34a' },
+            { id: 'h2', name: '民宅', x: TOWN_X + 100, y: TOWN_Y + 80, width: 30, height: 30, type: 'civilian', color: '#16a34a' },
+            { id: 'h3', name: '民宅', x: TOWN_X + 300, y: TOWN_Y + 60, width: 30, height: 30, type: 'civilian', color: '#16a34a' },
+            { id: 'h4', name: '民宅', x: TOWN_X + 60, y: TOWN_Y + 200, width: 30, height: 30, type: 'civilian', color: '#16a34a' },
+            { id: 'h5', name: '民宅', x: TOWN_X + 250, y: TOWN_Y + 220, width: 30, height: 30, type: 'civilian', color: '#16a34a' },
+            { id: 'h6', name: '民宅', x: TOWN_X + 320, y: TOWN_Y + 180, width: 30, height: 30, type: 'civilian', color: '#16a34a' },
+            { id: 'h7', name: '民宅', x: TOWN_X + 150, y: TOWN_Y + 150, width: 30, height: 30, type: 'civilian', color: '#16a34a' },
+            { id: 'h8', name: '民宅', x: TOWN_X + 200, y: TOWN_Y + 40, width: 30, height: 30, type: 'civilian', color: '#16a34a' },
+            { id: 'h9', name: '民宅', x: TOWN_X + 20, y: TOWN_Y + 120, width: 30, height: 30, type: 'civilian', color: '#16a34a' },
+            { id: 'h10', name: '民宅', x: TOWN_X + 350, y: TOWN_Y + 250, width: 30, height: 30, type: 'civilian', color: '#16a34a' },
+            { id: 'h11', name: '民宅', x: TOWN_X + 180, y: TOWN_Y + 260, width: 30, height: 30, type: 'civilian', color: '#16a34a' },
+        ];
 
-    if (selectedCep > 0) {
-      const angle = Math.random() * Math.PI * 2;
-      const r = Math.sqrt(-2 * Math.log(Math.random() || 0.001)) * (selectedCep * SCALE / 1.1774); 
-      deviationX = Math.cos(angle) * r;
-      deviationY = Math.sin(angle) * r;
-    }
+        // Level 3: 城市 (博愛特區 - 真實距離比例)
+        const CITY_CENTER_X = CANVAS_WIDTH / 2;
+        const CITY_CENTER_Y = CANVAS_HEIGHT / 2;
+        const CITY_OBJECTS = [
+            { id: 'presidential_office', name: '總統府 (目標)', x: 340, y: 210, width: 120, height: 80, type: 'military', color: '#ef4444' },
+            { id: 'school', name: '北一女中', x: 480, y: 310, width: 100, height: 80, type: 'civilian', color: '#10b981' },
+            { id: 'judicial', name: '司法院', x: 320, y: 320, width: 90, height: 60, type: 'civilian', color: '#059669' },
+            { id: 'museum', name: '國史館', x: 150, y: 220, width: 70, height: 70, type: 'civilian', color: '#34d399' },
+            { id: 'park', name: '二二八公園', x: 540, y: 40, width: 120, height: 100, type: 'civilian', color: '#86efac' }
+        ];
 
-    const hitX = mousePos.x + deviationX;
-    const hitY = mousePos.y + deviationY;
+        const LEVELS = [
+            {
+                id: 1,
+                title: "Level 1: 觀念解析 - 什麼是 CEP？",
+                shortTitle: "觀念解析：什麼是 CEP？",
+                mapType: 'explanation',
+                cep: 100,
+                missileCount: 0,
+                description: "【基礎觀念】在開始模擬前，我們先了解一個核心概念：CEP (圓周誤差率)。\n這不是「必中」的保證，而是一個「機率」的統計數據。\n本關卡將演示 CEP 的真實定義。",
+                quote: "CEP的概念是機率...一枚彈道飛彈CEP 100m，代表發射兩枚，統計上會有一枚落在半徑100公尺圓內，若發射一百枚就是有五十枚會落在這個圓形內。",
+                color: "bg-indigo-500"
+            },
+            {
+                id: 2,
+                title: "Level 2: CEP 的殘酷現實",
+                shortTitle: "現實體驗：轟炸小鎮",
+                mapType: 'town',
+                cep: 100,
+                userCanSetCep: true,
+                missileCount: 10,
+                description: "【命中率實驗】目標是小鎮中央的軍事設施（紅色），周圍有固定分佈的民宅（綠色）。\n請試著切換「傳說 (CEP=0)」與「現實 (CEP=100)」模式，體驗在誤差下要避開民宅擊中目標有多困難。",
+                quote: "飛彈在跑道上空爆炸...如果落到民宅，真的會造成毀損。一般平房或是透天厝，大概只能躲到地下室才能逃過一劫。",
+                color: "bg-blue-500"
+            },
+            {
+                id: 3,
+                title: "Level 3: 轟炸總統府 (附帶損傷)",
+                shortTitle: "實戰模擬：博愛特區",
+                mapType: 'city',
+                cep: 100,
+                missileCount: 15,
+                description: "【實戰模擬】如果目標是總統府？\n地圖換成博愛特區。在現實 CEP 下，要炸毀總統府，你敢保證不炸到旁邊的北一女中或醫院嗎？(1px = 1公尺)",
+                quote: "瞄準都市區域內的政府、軍事機關，一個不小心不就砸到旁邊的民間單位...右下角好像有一間學校。",
+                color: "bg-slate-700"
+            }
+        ];
 
-    let hitResult = 'miss';
-    let hitTargetName = '';
-    const config = LEVELS[currentLevel];
-    
-    let targets = [];
-    if (config.mapType === 'town') targets = TOWN_OBJECTS;
-    else if (config.mapType === 'city') targets = CITY_OBJECTS;
-    else if (config.mapType === 'runway') targets = [RUNWAY_OBJ];
+        function App() {
+            const canvasRef = useRef(null);
+            const [currentLevel, setCurrentLevel] = useState(0);
+            const [missilesLeft, setMissilesLeft] = useState(LEVELS[0].missileCount);
+            const [craters, setCraters] = useState([]);
+            const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
+            const [logs, setLogs] = useState([]);
+            const [gameState, setGameState] = useState('menu');
+            const [showBriefing, setShowBriefing] = useState(true);
+            
+            const [selectedCep, setSelectedCep] = useState(LEVELS[0].cep);
+            const [explanationMissileCount, setExplanationMissileCount] = useState(1);
+            const [showCepModal, setShowCepModal] = useState(false);
 
-    for (let i = targets.length - 1; i >= 0; i--) {
-      const t = targets[i];
-      if (hitX >= t.x && hitX <= t.x + t.width && hitY >= t.y && hitY <= t.y + t.height) {
-        if (t.type === 'military') hitResult = 'hit';
-        else if (t.type === 'civilian') hitResult = 'civilian';
-        else hitResult = 'miss';
-        hitTargetName = t.name;
-        break;
-      }
-    }
+            // Level 1: 彈著點狀態
+            const [explanationDots, setExplanationDots] = useState([]);
+            
+            // 初始化關卡
+            const startLevel = (levelIndex) => {
+                setCurrentLevel(levelIndex);
+                const level = LEVELS[levelIndex];
+                setMissilesLeft(level.missileCount);
+                setSelectedCep(level.cep);
+                setCraters([]);
+                setLogs([]);
+                setGameState('playing');
+                setShowBriefing(true);
+                setShowCepModal(false);
+                
+                // Level 1 重置
+                if (level.mapType === 'explanation') {
+                    setExplanationDots([]);
+                    setExplanationMissileCount(1);
+                    setTimeout(() => simulateOneVolley(1), 100);
+                }
+            };
 
-    const newCrater: Crater = { x: hitX, y: hitY, hitResult, targetName: hitTargetName };
-    setCraters(prev => [...prev, newCrater]);
+            const returnToMenu = () => {
+                setGameState('menu');
+            };
 
-    const devM = Math.round(Math.sqrt(deviationX**2 + deviationY**2) / SCALE);
-    let logMsg = ``;
-    if (hitResult === 'hit') logMsg = `🎯 命中目標：${hitTargetName}！ (偏差${devM}m)`;
-    else if (hitResult === 'civilian') logMsg = `😱 慘劇！誤擊平民：${hitTargetName}！ (偏差${devM}m)`;
-    else logMsg = `💨 脫靶 (偏差${devM}m)`;
-    setLogs(prev => [logMsg, ...prev]);
+            // Level 1: 模擬射擊 (單次顯示)
+            const simulateOneVolley = (count) => {
+                const centerX = CANVAS_WIDTH / 2;
+                const centerY = CANVAS_HEIGHT / 2 - 110; 
+                const cepRadius = 70; 
+                
+                const newDots = [];
 
-    if (missilesLeft - 1 === 0) {
-      setTimeout(() => setGameState('summary'), 1000);
-    }
-  };
+                for (let i = 0; i < count; i++) {
+                    const isInside = Math.random() < 0.5;
+                    let r, theta;
+                    theta = Math.random() * 2 * Math.PI;
+                    
+                    if (isInside) {
+                        r = Math.sqrt(Math.random()) * cepRadius;
+                    } else {
+                        r = cepRadius + Math.sqrt(Math.random()) * (cepRadius * 1.5);
+                    }
 
-  const militaryHits = craters.filter(c => c.hitResult === 'hit').length;
-  const civilianHits = craters.filter(c => c.hitResult === 'civilian').length;
+                    const x = centerX + r * Math.cos(theta);
+                    const y = centerY + r * Math.sin(theta);
+                    newDots.push({ x, y, inside: isInside });
+                }
+                setExplanationDots(newDots);
+            };
 
-  return (
-    <div className="min-h-screen bg-gray-100 p-4 font-sans text-gray-800 flex flex-col items-center">
-      <div className="max-w-4xl w-full bg-white shadow-xl rounded-lg overflow-hidden min-h-[600px] flex flex-col">
-        
-        {/* Header */}
-        <div className="bg-slate-800 text-white p-4 flex justify-between items-center shrink-0">
-          <div>
-            <h1 className="text-2xl font-bold flex items-center gap-2">
-              <Icons.Crosshair className="w-6 h-6" /> 飛彈模擬器：CEP 的現實
-            </h1>
-          </div>
-          <div className="flex gap-4 text-sm items-center">
-             {gameState !== 'menu' && (
-                <button onClick={returnToMenu} className="flex items-center gap-2 bg-slate-700 hover:bg-slate-600 px-3 py-1 rounded border border-slate-600 transition-colors">
-                  <Icons.Home className="w-4 h-4" /> 回主選單
-                </button>
-             )}
-          </div>
-        </div>
+            // 監聽說明數量改變
+            useEffect(() => {
+                if (gameState === 'playing' && LEVELS[currentLevel].mapType === 'explanation') {
+                    simulateOneVolley(explanationMissileCount);
+                }
+            }, [explanationMissileCount, gameState, currentLevel]);
 
-        {/* --- MENU --- */}
-        {gameState === 'menu' && (
-          <div className="flex-1 bg-gray-50 p-8 flex flex-col items-center justify-center animate-fadeIn">
-            <h2 className="text-3xl font-bold text-gray-800 mb-2">選擇模擬關卡</h2>
-            <p className="text-gray-500 mb-8">請選擇一個情境開始體驗 CEP 與彈道飛彈的特性</p>
-            {/* 3 Columns for Levels */}
-            <div className="flex flex-col gap-6 w-full max-w-5xl">
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 w-full">
-                  {LEVELS.map((level, index) => (
-                    <button key={level.id} onClick={() => startLevel(index)} className="flex flex-col text-left bg-white rounded-xl shadow-md hover:shadow-xl hover:-translate-y-1 transition-all duration-300 border border-gray-100 overflow-hidden group">
-                      <div className={`${level.color} h-3 w-full`}></div>
-                      <div className="p-6 flex flex-col h-full">
-                        <h3 className="text-xl font-bold text-gray-800 mb-2 group-hover:text-blue-600 transition-colors">{level.shortTitle.split('：')[0]}</h3>
-                        <div className="text-sm font-medium text-gray-500 mb-4 pb-4 border-b border-gray-100">{level.shortTitle.split('：')[1]}</div>
-                        <p className="text-sm text-gray-600 leading-relaxed mb-6 flex-grow">{level.description.split('\n')[0]}</p>
-                        <div className="mt-auto flex justify-between items-center text-sm font-semibold text-gray-400 group-hover:text-gray-800">
-                          <span className="flex items-center gap-1"><Icons.Target className="w-4 h-4"/> {level.missileCount > 0 ? level.missileCount + ' 枚飛彈' : '觀念教學'}</span>
-                          <span className="bg-gray-100 px-3 py-1 rounded-full group-hover:bg-blue-50 group-hover:text-blue-600 transition-colors">開始</span>
+            // 繪圖邏輯
+            useEffect(() => {
+                if (gameState === 'menu' || gameState === 'bibliography') return;
+
+                const canvas = canvasRef.current;
+                if (!canvas) return;
+                const ctx = canvas.getContext('2d');
+                if (!ctx) return;
+                
+                const config = LEVELS[currentLevel];
+
+                // 清空背景
+                ctx.clearRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
+                ctx.fillStyle = '#e5e7eb';
+                ctx.fillRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
+
+                // --- LEVEL 1: 觀念演示 ---
+                if (config.mapType === 'explanation') {
+                    const cx = CANVAS_WIDTH / 2;
+                    const cy = CANVAS_HEIGHT / 2 - 110; 
+                    const r = 70;
+
+                    // 目標點
+                    ctx.beginPath();
+                    ctx.arc(cx, cy, 3, 0, Math.PI * 2);
+                    ctx.fillStyle = '#999';
+                    ctx.fill();
+                    
+                    // CEP 圓圈
+                    ctx.beginPath();
+                    ctx.arc(cx, cy, r, 0, Math.PI * 2);
+                    ctx.strokeStyle = '#3b82f6';
+                    ctx.lineWidth = 3;
+                    ctx.setLineDash([10, 5]);
+                    ctx.stroke();
+                    ctx.setLineDash([]);
+                    ctx.fillStyle = 'rgba(59, 130, 246, 0.05)';
+                    ctx.fill();
+
+                    // 文字
+                    ctx.fillStyle = '#1e3a8a';
+                    ctx.font = 'bold 16px Arial';
+                    ctx.textAlign = 'center';
+                    ctx.fillText(`CEP 半徑 (50% 機率)`, cx, cy - r - 15);
+
+                    // 彈著點
+                    explanationDots.forEach(dot => {
+                        ctx.beginPath();
+                        ctx.arc(dot.x, dot.y, 6, 0, Math.PI * 2); 
+                        if (dot.inside) {
+                            ctx.fillStyle = 'rgba(239, 68, 68, 0.9)'; // 紅色 (中)
+                        } else {
+                            ctx.fillStyle = 'rgba(0, 0, 0, 0.7)'; // 黑色 (不中)
+                        }
+                        ctx.fill();
+                        ctx.strokeStyle = '#fff';
+                        ctx.lineWidth = 1;
+                        ctx.stroke();
+                    });
+                    return; 
+                }
+
+                // --- LEVEL 2 & 3 ---
+                let targets = [];
+                if (config.mapType === 'town') {
+                    // 繪製城鎮底板
+                    ctx.fillStyle = 'rgba(251, 191, 36, 0.2)'; 
+                    ctx.fillRect(TOWN_X, TOWN_Y, TOWN_WIDTH, TOWN_HEIGHT);
+                    ctx.strokeStyle = '#d97706';
+                    ctx.lineWidth = 2;
+                    ctx.strokeRect(TOWN_X, TOWN_Y, TOWN_WIDTH, TOWN_HEIGHT);
+                    
+                    // 尺寸
+                    ctx.fillStyle = '#d97706';
+                    ctx.font = '12px Arial';
+                    ctx.textAlign = 'center';
+                    ctx.fillText(`${TOWN_WIDTH}m`, TOWN_X + TOWN_WIDTH / 2, TOWN_Y - 5);
+                    ctx.textAlign = 'right';
+                    ctx.fillText(`${TOWN_HEIGHT}m`, TOWN_X - 5, TOWN_Y + TOWN_HEIGHT / 2);
+                    
+                    targets = TOWN_OBJECTS;
+                } else if (config.mapType === 'city') {
+                    // 繪製街道
+                    ctx.strokeStyle = '#d1d5db';
+                    ctx.lineWidth = 10;
+                    ctx.beginPath();
+                    ctx.moveTo(CITY_CENTER_X - 120, 0); ctx.lineTo(CITY_CENTER_X - 120, CANVAS_HEIGHT);
+                    ctx.moveTo(CITY_CENTER_X + 20, 0); ctx.lineTo(CITY_CENTER_X + 20, CANVAS_HEIGHT);
+                    ctx.moveTo(0, CITY_CENTER_Y); ctx.lineTo(CANVAS_WIDTH, CITY_CENTER_Y);
+                    ctx.moveTo(0, CITY_CENTER_Y + 110); ctx.lineTo(CANVAS_WIDTH, CITY_CENTER_Y + 110);
+                    ctx.stroke();
+                    targets = CITY_OBJECTS;
+                } else if (config.mapType === 'runway') {
+                    targets = [RUNWAY_OBJ];
+                    // 跑道線
+                    ctx.strokeStyle = '#ffffff';
+                    ctx.setLineDash([20, 10]);
+                    ctx.beginPath();
+                    ctx.moveTo(RUNWAY_OBJ.x, RUNWAY_OBJ.y + RUNWAY_OBJ.height / 2);
+                    ctx.lineTo(RUNWAY_OBJ.x + RUNWAY_OBJ.width, RUNWAY_OBJ.y + RUNWAY_OBJ.height / 2);
+                    ctx.stroke();
+                    ctx.setLineDash([]);
+                }
+
+                // 繪製物件
+                targets.forEach(obj => {
+                    ctx.fillStyle = obj.color;
+                    ctx.fillRect(obj.x, obj.y, obj.width, obj.height);
+                    ctx.strokeStyle = 'rgba(0,0,0,0.2)';
+                    ctx.lineWidth = 2;
+                    ctx.strokeRect(obj.x, obj.y, obj.width, obj.height);
+                    
+                    ctx.fillStyle = 'white';
+                    if (obj.type === 'town_area') ctx.fillStyle = '#b45309'; 
+                    ctx.font = 'bold 12px Arial';
+                    ctx.textAlign = 'center';
+                    // 顯示所有名稱
+                    ctx.fillText(obj.name, obj.x + obj.width / 2, obj.y + obj.height / 2 + 4);
+                });
+
+                // 繪製彈坑
+                craters.forEach(crater => {
+                    ctx.beginPath();
+                    ctx.arc(crater.x, crater.y, 15, 0, Math.PI * 2);
+                    if (crater.hitResult === 'civilian') ctx.fillStyle = 'rgba(239, 68, 68, 0.8)';
+                    else if (crater.hitResult === 'hit') ctx.fillStyle = 'rgba(0, 0, 0, 0.8)';
+                    else ctx.fillStyle = 'rgba(107, 114, 128, 0.5)';
+                    ctx.fill();
+                    ctx.strokeStyle = '#fff';
+                    ctx.lineWidth = 1;
+                    ctx.stroke();
+                });
+
+                // 繪製準心
+                if (gameState === 'playing' && !showBriefing && missilesLeft > 0) {
+                    ctx.beginPath();
+                    ctx.arc(mousePos.x, mousePos.y, 5, 0, Math.PI * 2);
+                    ctx.fillStyle = 'red';
+                    ctx.fill();
+                    
+                    if (selectedCep > 0) {
+                        ctx.beginPath();
+                        ctx.arc(mousePos.x, mousePos.y, selectedCep * SCALE / 2, 0, Math.PI * 2);
+                        ctx.strokeStyle = 'rgba(239, 68, 68, 0.4)';
+                        ctx.lineWidth = 2;
+                        ctx.setLineDash([5, 5]);
+                        ctx.stroke();
+                        ctx.setLineDash([]);
+                        ctx.fillStyle = 'rgba(239, 68, 68, 0.05)';
+                        ctx.fill();
+                        ctx.fillStyle = '#dc2626';
+                        ctx.font = '12px Arial';
+                        ctx.textAlign = 'left';
+                        ctx.fillText(`CEP: ${selectedCep}m`, mousePos.x + 10, mousePos.y - 10);
+                    } else {
+                        ctx.fillStyle = '#dc2626';
+                        ctx.font = '12px Arial';
+                        ctx.textAlign = 'left';
+                        ctx.fillText(`CEP: 0m`, mousePos.x + 10, mousePos.y - 10);
+                    }
+                }
+            }, [craters, mousePos, currentLevel, gameState, showBriefing, missilesLeft, selectedCep, explanationDots]);
+
+            // 滑鼠移動
+            const handleMouseMove = (e) => {
+                if (gameState !== 'playing' || LEVELS[currentLevel].mapType === 'explanation') return;
+                const rect = canvasRef.current?.getBoundingClientRect();
+                if (rect) {
+                    setMousePos({
+                        x: e.clientX - rect.left,
+                        y: e.clientY - rect.top
+                    });
+                }
+            };
+
+            // 發射飛彈
+            const handleFire = () => {
+                if (missilesLeft <= 0 || showBriefing || LEVELS[currentLevel].mapType === 'explanation') return;
+                setMissilesLeft(prev => prev - 1);
+
+                let deviationX = 0;
+                let deviationY = 0;
+
+                if (selectedCep > 0) {
+                    const angle = Math.random() * Math.PI * 2;
+                    const r = Math.sqrt(-2 * Math.log(Math.random() || 0.001)) * (selectedCep * SCALE / 1.1774); 
+                    deviationX = Math.cos(angle) * r;
+                    deviationY = Math.sin(angle) * r;
+                }
+
+                const hitX = mousePos.x + deviationX;
+                const hitY = mousePos.y + deviationY;
+
+                let hitResult = 'miss';
+                let hitTargetName = '';
+                const config = LEVELS[currentLevel];
+                
+                let targets = [];
+                if (config.mapType === 'town') targets = TOWN_OBJECTS;
+                else if (config.mapType === 'city') targets = CITY_OBJECTS;
+                else if (config.mapType === 'runway') targets = [RUNWAY_OBJ];
+
+                for (let i = targets.length - 1; i >= 0; i--) {
+                    const t = targets[i];
+                    if (hitX >= t.x && hitX <= t.x + t.width && hitY >= t.y && hitY <= t.y + t.height) {
+                        if (t.type === 'military') hitResult = 'hit';
+                        else if (t.type === 'civilian') hitResult = 'civilian';
+                        else hitResult = 'miss';
+                        hitTargetName = t.name;
+                        break;
+                    }
+                }
+
+                const newCrater = { x: hitX, y: hitY, hitResult, targetName: hitTargetName };
+                setCraters(prev => [...prev, newCrater]);
+
+                const devM = Math.round(Math.sqrt(deviationX**2 + deviationY**2) / SCALE);
+                let logMsg = ``;
+                if (hitResult === 'hit') logMsg = `🎯 命中目標：${hitTargetName}！ (偏差${devM}m)`;
+                else if (hitResult === 'civilian') logMsg = `😱 慘劇！誤擊平民：${hitTargetName}！ (偏差${devM}m)`;
+                else logMsg = `💨 脫靶 (偏差${devM}m)`;
+                setLogs(prev => [logMsg, ...prev]);
+
+                if (missilesLeft - 1 === 0) {
+                    setTimeout(() => setGameState('summary'), 1000);
+                }
+            };
+
+            const militaryHits = craters.filter(c => c.hitResult === 'hit').length;
+            const civilianHits = craters.filter(c => c.hitResult === 'civilian').length;
+
+            return (
+                <div className="flex flex-col min-h-screen">
+                    {/* Header */}
+                    <div className="bg-slate-800 text-white p-4 flex justify-between items-center shrink-0">
+                        <div>
+                            <h1 className="text-2xl font-bold flex items-center gap-2">
+                                <Icons.Crosshair className="w-6 h-6" /> 飛彈模擬器：CEP 的現實
+                            </h1>
                         </div>
-                      </div>
-                    </button>
-                  ))}
-                </div>
-
-                {/* Bibliography Button (Full Width) */}
-                <button onClick={() => setGameState('bibliography')} className="flex flex-col text-left bg-white rounded-xl shadow-md hover:shadow-xl hover:-translate-y-1 transition-all duration-300 border border-gray-100 overflow-hidden group w-full">
-                    <div className="bg-emerald-500 h-3 w-full"></div>
-                    <div className="p-6 flex flex-col h-full">
-                        <h3 className="text-xl font-bold text-gray-800 mb-2 group-hover:text-blue-600 transition-colors">📖 參考書目</h3>
-                        <div className="text-sm font-medium text-gray-500 mb-4 pb-4 border-b border-gray-100">延伸閱讀</div>
-                        <p className="text-sm text-gray-600 leading-relaxed mb-6 flex-grow">軍事謠言是造成台灣失敗主義的溫床...<br/>了解更多關於台海局勢的迷思破解。</p>
-                        <div className="mt-auto flex justify-between items-center text-sm font-semibold text-gray-400 group-hover:text-gray-800">
-                        <span className="flex items-center gap-1"><Icons.BookOpen className="w-4 h-4"/> 閱讀文章</span>
-                        <span className="bg-gray-100 px-3 py-1 rounded-full group-hover:bg-blue-50 group-hover:text-blue-600 transition-colors">前往</span>
+                        <div className="flex gap-4 text-sm items-center">
+                            {gameState !== 'menu' && (
+                                <button onClick={returnToMenu} className="flex items-center gap-2 bg-slate-700 hover:bg-slate-600 px-3 py-1 rounded border border-slate-600 transition-colors">
+                                    <Icons.Home className="w-4 h-4" /> 回主選單
+                                </button>
+                            )}
                         </div>
                     </div>
-                </button>
-            </div>
-          </div>
-        )}
 
-        {/* --- BIBLIOGRAPHY VIEW --- */}
-        {gameState === 'bibliography' && (
-          <div className="flex-1 bg-white p-8 overflow-y-auto">
-             <div className="max-w-4xl mx-auto flex flex-col md:flex-row gap-8 items-start">
-                <div className="flex-1">
-                   <h2 className="text-2xl font-bold mb-6 text-slate-800 border-b pb-4">軍事謠言是造成台灣失敗主義的溫床</h2>
-                   <div className="text-gray-700 space-y-4 leading-relaxed text-justify">
-                     <p>台灣大選之前，必會出現軍事謠言大量散布。</p>
-                     <p>以往都是少部分的中國網民，配合台灣統派譏諷貶低台灣國軍，散播吹捧解放軍實力的農場文。但在二〇二〇年總統大選，此趨勢已擴張到一般民眾，透過LINE、Facebook等封閉群組的特性，中國加強資訊戰的力道，力求讓台灣民眾普遍相信，中國解放軍的實力不僅可以三兩下打敗台灣，更可以超英趕美，不出數年就可成為新霸權。也就是要台灣人早點認清現實，快快投降。</p>
-                     <p>但仔細想一想，這類謠言的目的是什麼？</p>
-                     <p>謠言是動搖對手民心的武器，是在沒有把握、無法有效直接進擊時，靠謠言來動搖對手的信心，創造打擊的有利條件，甚至想以恐嚇的方式讓台灣乖乖就範。因此，謠言所代表的是造謠的一方沒有必勝的把握，試圖透過謠言創造對其有利的情勢。</p>
-                   </div>
-                   <button onClick={returnToMenu} className="mt-8 flex items-center gap-2 bg-slate-800 hover:bg-slate-700 text-white px-6 py-2 rounded-lg transition-colors">
-                      <Icons.Home className="w-4 h-4"/> 返回主選單
-                   </button>
+                    {/* --- MENU --- */}
+                    {gameState === 'menu' && (
+                        <div className="flex-1 bg-gray-50 p-8 flex flex-col items-center justify-center animate-fadeIn">
+                            <h2 className="text-3xl font-bold text-gray-800 mb-2">選擇模擬關卡</h2>
+                            <p className="text-gray-500 mb-8">請選擇一個情境開始體驗 CEP 與彈道飛彈的特性</p>
+                            
+                            <div className="flex flex-col gap-6 w-full max-w-5xl">
+                                {/* Levels Grid (3 Columns) */}
+                                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 w-full">
+                                    {LEVELS.map((level, index) => (
+                                        <button key={level.id} onClick={() => startLevel(index)} className="flex flex-col text-left bg-white rounded-xl shadow-md hover:shadow-xl hover:-translate-y-1 transition-all duration-300 border border-gray-100 overflow-hidden group">
+                                            <div className={`${level.color} h-3 w-full`}></div>
+                                            <div className="p-6 flex flex-col h-full">
+                                                <h3 className="text-xl font-bold text-gray-800 mb-2 group-hover:text-blue-600 transition-colors">{level.shortTitle.split('：')[0]}</h3>
+                                                <div className="text-sm font-medium text-gray-500 mb-4 pb-4 border-b border-gray-100">{level.shortTitle.split('：')[1]}</div>
+                                                <p className="text-sm text-gray-600 leading-relaxed mb-6 flex-grow">{level.description.split('\n')[0]}</p>
+                                                <div className="mt-auto flex justify-between items-center text-sm font-semibold text-gray-400 group-hover:text-gray-800">
+                                                    <span className="flex items-center gap-1"><Icons.Target className="w-4 h-4"/> {level.missileCount > 0 ? level.missileCount + ' 枚飛彈' : '觀念教學'}</span>
+                                                    <span className="bg-gray-100 px-3 py-1 rounded-full group-hover:bg-blue-50 group-hover:text-blue-600 transition-colors">開始</span>
+                                                </div>
+                                            </div>
+                                        </button>
+                                    ))}
+                                </div>
+
+                                {/* Bibliography Button (Full Width) */}
+                                <button onClick={() => setGameState('bibliography')} className="flex flex-col text-left bg-white rounded-xl shadow-md hover:shadow-xl hover:-translate-y-1 transition-all duration-300 border border-gray-100 overflow-hidden group w-full">
+                                    <div className="bg-emerald-500 h-3 w-full"></div>
+                                    <div className="p-6 flex flex-col h-full">
+                                        <h3 className="text-xl font-bold text-gray-800 mb-2 group-hover:text-blue-600 transition-colors">📖 參考書目</h3>
+                                        <div className="text-sm font-medium text-gray-500 mb-4 pb-4 border-b border-gray-100">延伸閱讀</div>
+                                        <p className="text-sm text-gray-600 leading-relaxed mb-6 flex-grow">軍事謠言是造成台灣失敗主義的溫床...<br/>了解更多關於台海局勢的迷思破解。</p>
+                                        <div className="mt-auto flex justify-between items-center text-sm font-semibold text-gray-400 group-hover:text-gray-800">
+                                            <span className="flex items-center gap-1"><Icons.BookOpen className="w-4 h-4"/> 閱讀文章</span>
+                                            <span className="bg-gray-100 px-3 py-1 rounded-full group-hover:bg-blue-50 group-hover:text-blue-600 transition-colors">前往</span>
+                                        </div>
+                                    </div>
+                                </button>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* --- BIBLIOGRAPHY VIEW --- */}
+                    {gameState === 'bibliography' && (
+                        <div className="flex-1 bg-white p-8 overflow-y-auto">
+                            <div className="max-w-4xl mx-auto flex flex-col md:flex-row gap-8 items-start">
+                                <div className="flex-1">
+                                    <h2 className="text-2xl font-bold mb-6 text-slate-800 border-b pb-4">軍事謠言是造成台灣失敗主義的溫床</h2>
+                                    <div className="text-gray-700 space-y-4 leading-relaxed text-justify">
+                                        <p>台灣大選之前，必會出現軍事謠言大量散布。</p>
+                                        <p>以往都是少部分的中國網民，配合台灣統派譏諷貶低台灣國軍，散播吹捧解放軍實力的農場文。但在二〇二〇年總統大選，此趨勢已擴張到一般民眾，透過LINE、Facebook等封閉群組的特性，中國加強資訊戰的力道，力求讓台灣民眾普遍相信，中國解放軍的實力不僅可以三兩下打敗台灣，更可以超英趕美，不出數年就可成為新霸權。也就是要台灣人早點認清現實，快快投降。</p>
+                                        <p>但仔細想一想，這類謠言的目的是什麼？</p>
+                                        <p>謠言是動搖對手民心的武器，是在沒有把握、無法有效直接進擊時，靠謠言來動搖對手的信心，創造打擊的有利條件，甚至想以恐嚇的方式讓台灣乖乖就範。因此，謠言所代表的是造謠的一方沒有必勝的把握，試圖透過謠言創造對其有利的情勢。</p>
+                                    </div>
+                                    <button onClick={returnToMenu} className="mt-8 flex items-center gap-2 bg-slate-800 hover:bg-slate-700 text-white px-6 py-2 rounded-lg transition-colors">
+                                        <Icons.Home className="w-4 h-4"/> 返回主選單
+                                    </button>
+                                </div>
+                                <div className="w-full md:w-1/3 shrink-0 flex flex-col items-center">
+                                    {/* 圖片預留位置 */}
+                                    <div className="w-full bg-gray-100 rounded-lg shadow-lg overflow-hidden border border-gray-200">
+                                        <img 
+                                            src="./阿共打過來該怎麼辦.jpg" 
+                                            alt="阿共打來怎麼辦 書影" 
+                                            className="w-full h-auto object-cover"
+                                            onError={(e) => {
+                                                e.target.onerror = null; 
+                                                e.target.src="https://placehold.co/400x560/e2e8f0/475569?text=Image+Not+Found";
+                                            }}
+                                        />
+                                    </div>
+                                    <p className="text-sm text-gray-500 mt-3 text-center">
+                                        圖片說明：阿共打來怎麼辦<br/>
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* --- GAME --- */}
+                    {gameState !== 'menu' && gameState !== 'bibliography' && (
+                        <div className="relative flex-1 bg-gray-200">
+                            <canvas ref={canvasRef} width={CANVAS_WIDTH} height={CANVAS_HEIGHT} className={`w-full h-full object-contain block ${LEVELS[currentLevel].mapType === 'explanation' ? 'cursor-default' : 'cursor-crosshair'}`} onMouseMove={handleMouseMove} onClick={handleFire} />
+
+                            {/* Level 1 Overlay */}
+                            {gameState === 'playing' && !showBriefing && LEVELS[currentLevel].mapType === 'explanation' && (
+                                <div className="absolute bottom-2 left-0 right-0 flex justify-center pointer-events-none">
+                                    <div className="bg-white/95 backdrop-blur-sm p-4 rounded-xl shadow-xl border border-blue-100 max-w-lg w-full text-center pointer-events-auto overflow-hidden mx-4">
+                                        <div className="flex justify-between items-center mb-2 px-1">
+                                            <h3 className="text-lg font-bold text-slate-800">CEP 的機率定義</h3>
+                                            <button onClick={() => setShowCepModal(true)} className="text-blue-600 hover:text-blue-800 text-xs flex items-center gap-1 font-bold underline"><Icons.HelpCircle className="w-4 h-4"/> 什麼是 CEP?</button>
+                                        </div>
+                                        <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-4">
+                                            <div className="flex items-center gap-2">
+                                                <label className="text-sm font-bold text-gray-700 whitespace-nowrap">發射數量：</label>
+                                                <div className="relative">
+                                                    <select value={explanationMissileCount} onChange={(e) => setExplanationMissileCount(Number(e.target.value))} className="appearance-none bg-blue-50 border border-blue-200 text-blue-900 text-sm font-bold rounded py-1 pl-3 pr-8 focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer">
+                                                        {PROBABILITY_DATA.map(d => (<option key={d.count} value={d.count}>{d.count} 枚</option>))}
+                                                    </select>
+                                                    <Icons.ChevronDown className="absolute right-1 top-1.5 w-4 h-4 text-blue-500 pointer-events-none"/>
+                                                </div>
+                                            </div>
+                                            <button onClick={() => simulateOneVolley(explanationMissileCount)} className="flex items-center gap-1 bg-gray-100 hover:bg-gray-200 text-gray-600 px-3 py-1 rounded text-sm font-medium border border-gray-300 transition-colors"><Icons.RefreshCw className="w-4 h-4"/> 再次發射</button>
+                                        </div>
+                                        <div className="grid grid-cols-2 gap-2 mb-4 text-left bg-slate-50 p-3 rounded-lg border border-slate-100">
+                                            <div><div className="text-xs text-gray-500">完全脫靶機率</div><div className="text-lg font-bold text-gray-700">{PROBABILITY_DATA[explanationMissileCount - 1].miss}</div></div>
+                                            <div><div className="text-xs text-gray-500">至少命中1發機率</div><div className="text-lg font-bold text-red-600">{PROBABILITY_DATA[explanationMissileCount - 1].hit}</div></div>
+                                        </div>
+                                        <p className="text-xs text-gray-500 mb-4 px-2">{explanationMissileCount === 1 ? "單發命中率僅 50%。畫面中紅色為圓內命中，黑色為脫靶。" : `發射 ${explanationMissileCount} 枚，確保命中的機率大幅提升。`}</p>
+                                        <button onClick={() => startLevel(1)} className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-full font-bold shadow-lg flex items-center gap-2 mx-auto transition-transform hover:scale-105 text-sm">下一步：實際體驗 CEP <Icons.ArrowRight className="w-4 h-4"/></button>
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* Modal & Overlays */}
+                            {showCepModal && (
+                                <div className="absolute inset-0 bg-black/60 z-50 flex items-center justify-center p-4">
+                                    <div className="bg-white rounded-lg shadow-2xl p-6 max-w-md w-full relative animate-fadeIn">
+                                        <button onClick={() => setShowCepModal(false)} className="absolute top-4 right-4 text-gray-400 hover:text-gray-600"><Icons.X className="w-6 h-6" /></button>
+                                        <h3 className="text-xl font-bold text-slate-800 mb-4 flex items-center gap-2"><Icons.BookOpen className="text-blue-600 w-6 h-6"/> CEP (圓周誤差率)</h3>
+                                        <div className="text-gray-600 space-y-4 text-sm leading-relaxed text-left">
+                                            <p><span className="font-bold text-gray-800">定義：</span>CEP 是一個統計學名詞。如果 CEP 是 100 公尺，代表發射很多枚飛彈後，<span className="font-bold text-red-600">只有 50% 會落在目標 100 公尺的範圍內</span>。</p>
+                                        </div>
+                                        <button onClick={() => setShowCepModal(false)} className="mt-6 w-full bg-slate-800 text-white py-2 rounded font-bold hover:bg-slate-700">了解，回到模擬</button>
+                                    </div>
+                                </div>
+                            )}
+
+                            {gameState === 'playing' && !showBriefing && LEVELS[currentLevel].userCanSetCep && (
+                                <div className="absolute top-4 right-4 bg-white/90 p-4 rounded-lg shadow-lg z-0 backdrop-blur-sm border border-gray-200">
+                                    <h3 className="font-bold text-gray-700 mb-2 flex items-center gap-2"><Icons.MousePointer2 className="w-4 h-4"/> 選擇情境</h3>
+                                    <div className="flex gap-2">
+                                        <button onClick={(e) => { e.stopPropagation(); setSelectedCep(0); }} className={`px-3 py-1 rounded text-sm font-bold transition-colors ${selectedCep === 0 ? 'bg-red-600 text-white' : 'bg-gray-200 text-gray-600 hover:bg-gray-300'}`}>CEP = 0<br/><span className="text-xs font-normal">網路謠言</span></button>
+                                        <button onClick={(e) => { e.stopPropagation(); setSelectedCep(100); }} className={`px-3 py-1 rounded text-sm font-bold transition-colors ${selectedCep === 100 ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-600 hover:bg-gray-300'}`}>CEP = 100<br/><span className="text-xs font-normal">現實世界</span></button>
+                                    </div>
+                                </div>
+                            )}
+
+                            {showBriefing && (
+                                <div className="absolute inset-0 bg-black/80 flex items-center justify-center p-8 z-10">
+                                    <div className="bg-white max-w-lg w-full p-6 rounded-lg shadow-2xl text-center animate-fadeIn">
+                                        <h2 className="text-2xl font-bold mb-2 text-slate-800">{LEVELS[currentLevel].title}</h2>
+                                        <div className={`w-16 h-1 ${LEVELS[currentLevel].color.replace('bg-', 'bg-')} mx-auto mb-4 rounded bg-blue-500`}></div>
+                                        <div className="mb-6 text-left bg-gray-50 p-5 rounded border-l-4 border-blue-500">
+                                            <p className="text-gray-700 whitespace-pre-wrap leading-relaxed">{LEVELS[currentLevel].description}</p>
+                                            <div className="mt-4 pt-4 border-t border-gray-200"><p className="text-sm text-slate-500 italic flex gap-2"><Icons.Info className="w-4 h-4 flex-shrink-0 mt-0.5"/>"{LEVELS[currentLevel].quote}"</p></div>
+                                        </div>
+                                        <button onClick={() => setShowBriefing(false)} className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-10 rounded-full transition-all transform hover:scale-105 shadow-lg flex items-center gap-2 mx-auto"><Icons.Play className="w-5 h-5" fill="currentColor" /> {LEVELS[currentLevel].mapType === 'explanation' ? '開始演示' : '開始模擬'}</button>
+                                    </div>
+                                </div>
+                            )}
+
+                            {gameState === 'summary' && (
+                                <div className="absolute inset-0 bg-black/85 flex items-center justify-center p-8 z-10">
+                                    <div className="bg-white max-w-lg w-full p-6 rounded-lg shadow-2xl text-center">
+                                        <h2 className="text-3xl font-bold mb-6 text-gray-800">模擬結束</h2>
+                                        <div className="grid grid-cols-2 gap-4 mb-6">
+                                            <div className="bg-green-50 p-4 rounded border border-green-100"><div className="text-4xl font-bold text-green-600">{militaryHits}</div><div className="text-sm text-gray-600 font-bold">成功命中目標</div></div>
+                                            <div className="bg-red-50 p-4 rounded border border-red-100"><div className="text-4xl font-bold text-red-600">{civilianHits}</div><div className="text-sm text-gray-600 font-bold">誤擊民用設施</div></div>
+                                        </div>
+                                        <div className="mb-8 text-left bg-orange-50 p-4 rounded border-l-4 border-orange-400">
+                                            <h3 className="font-bold text-orange-800 mb-2">戰術分析</h3>
+                                            <p className="text-sm text-gray-700 leading-relaxed">
+                                                {currentLevel === 1 && "這就是現實。即使瞄準了，偏差仍會讓飛彈落在目標外。"}
+                                                {currentLevel === 2 && "看到那些落在學校或街道上的飛彈了嗎？在都市區使用彈道飛彈，伴隨的就是高度的附帶損傷與政治代價。"}
+                                            </p>
+                                        </div>
+                                        <div className="flex justify-center gap-4">
+                                            <button onClick={() => startLevel(currentLevel)} className="flex items-center gap-2 px-5 py-2 border border-gray-300 rounded hover:bg-gray-100 text-gray-600 font-medium transition-colors"><Icons.RotateCcw className="w-4 h-4"/> 重試本關</button>
+                                            <button onClick={returnToMenu} className="bg-slate-800 hover:bg-slate-900 text-white px-8 py-2 rounded font-bold shadow-md transition-colors flex items-center gap-2"><Icons.Home className="w-4 h-4"/> 回主選單</button>
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
+
+                            {LEVELS[currentLevel].mapType !== 'explanation' && (
+                                <div className="absolute top-4 left-4 flex flex-col gap-2 pointer-events-none">
+                                    <div className="bg-black/70 text-white p-3 rounded-lg backdrop-blur-sm border border-white/10 shadow-lg">
+                                        <div className="text-xs text-gray-300 uppercase tracking-wider mb-1">Missiles Left</div>
+                                        <div className="text-3xl font-mono text-red-400 font-bold">{missilesLeft}</div>
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+                    )}
+
+                    {/* --- CONTROL PANEL --- */}
+                    {gameState !== 'menu' && gameState !== 'bibliography' && LEVELS[currentLevel].mapType !== 'explanation' && (
+                        <div className="p-4 bg-gray-50 border-t border-gray-200 shrink-0">
+                            <div className="flex gap-6 h-32">
+                                <div className="w-1/3 flex flex-col justify-between">
+                                    <div>
+                                        <h3 className="font-bold text-gray-700 flex items-center gap-2 mb-2"><Icons.Target className="text-blue-600 w-4 h-4"/> 操作說明</h3>
+                                        <p className="text-sm text-gray-600 leading-relaxed">{currentLevel === 1 ? "右上角可切換 CEP 模式。點擊畫面發射飛彈。" : "移動滑鼠瞄準，點擊左鍵發射。紅色圓圈為 CEP (50% 落點機率範圍)。"}</p>
+                                    </div>
+                                    <div className="mt-2">
+                                        <div className="flex justify-between text-xs text-gray-500 mb-1"><span>精準 (0m)</span><span>偏差 ({selectedCep}m)</span></div>
+                                        <div className="w-full bg-gray-200 rounded-full h-2 overflow-hidden"><div className="bg-gradient-to-r from-green-500 to-red-500 h-full transition-all duration-500" style={{width: `${Math.min((selectedCep / 200) * 100, 100)}%`}}></div></div>
+                                    </div>
+                                </div>
+                                <div className="w-2/3 bg-slate-900 text-green-400 font-mono text-sm p-3 rounded shadow-inner overflow-y-auto leading-snug">
+                                    {logs.length === 0 ? <div className="h-full flex items-center justify-center opacity-30 text-center">-- 等待戰術指令 --<br/>READY TO FIRE</div> : logs.map((log, i) => <div key={i} className="border-b border-gray-800 pb-1 mb-1 last:border-0 hover:bg-white/5 transition-colors"><span className="opacity-50 mr-2">[{logs.length - i}]</span>{log}</div>)}
+                                </div>
+                            </div>
+                        </div>
+                    )}
                 </div>
-                <div className="w-full md:w-1/3 shrink-0 flex flex-col items-center">
-                   {/* 圖片預留位置 */}
-                   <div className="w-full bg-gray-100 rounded-lg shadow-lg overflow-hidden border border-gray-200">
-                      <img 
-                        src="https://placehold.co/400x560/e2e8f0/475569?text=阿共打來怎麼辦\nBook+Cover" 
-                        alt="阿共打來怎麼辦" 
-                        className="w-full h-auto object-cover"
-                      />
-                   </div>
-                   <p className="text-sm text-gray-500 mt-3 text-center">
-                     圖片說明：阿共打來怎麼辦<br/>
-                     <span className="text-xs text-gray-400">(開發者註：請將圖片檔案置換為 ./阿共打過來該怎麼辦.jpg)</span>
-                   </p>
-                </div>
-             </div>
-          </div>
-        )}
+            );
+        };
 
-        {/* --- GAME --- */}
-        {gameState !== 'menu' && gameState !== 'bibliography' && (
-          <div className="relative flex-1 bg-gray-200">
-            <canvas ref={canvasRef} width={CANVAS_WIDTH} height={CANVAS_HEIGHT} className={`w-full h-full object-contain block ${LEVELS[currentLevel].mapType === 'explanation' ? 'cursor-default' : 'cursor-crosshair'}`} onMouseMove={handleMouseMove} onClick={handleFire} />
-
-            {/* Level 1 Overlay */}
-            {gameState === 'playing' && !showBriefing && LEVELS[currentLevel].mapType === 'explanation' && (
-              <div className="absolute bottom-2 left-0 right-0 flex justify-center pointer-events-none">
-                <div className="bg-white/95 backdrop-blur-sm p-4 rounded-xl shadow-xl border border-blue-100 max-w-lg w-full text-center pointer-events-auto overflow-hidden mx-4">
-                  <div className="flex justify-between items-center mb-2 px-1">
-                    <h3 className="text-lg font-bold text-slate-800">CEP 的機率定義</h3>
-                    <button onClick={() => setShowCepModal(true)} className="text-blue-600 hover:text-blue-800 text-xs flex items-center gap-1 font-bold underline"><Icons.HelpCircle className="w-4 h-4"/> 什麼是 CEP?</button>
-                  </div>
-                  <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-4">
-                    <div className="flex items-center gap-2">
-                       <label className="text-sm font-bold text-gray-700 whitespace-nowrap">發射數量：</label>
-                       <div className="relative">
-                         <select value={explanationMissileCount} onChange={(e) => setExplanationMissileCount(Number(e.target.value))} className="appearance-none bg-blue-50 border border-blue-200 text-blue-900 text-sm font-bold rounded py-1 pl-3 pr-8 focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer">
-                            {PROBABILITY_DATA.map(d => (<option key={d.count} value={d.count}>{d.count} 枚</option>))}
-                         </select>
-                         <Icons.ChevronDown className="absolute right-1 top-1.5 w-4 h-4 text-blue-500 pointer-events-none"/>
-                       </div>
-                    </div>
-                    <button onClick={() => simulateOneVolley(explanationMissileCount)} className="flex items-center gap-1 bg-gray-100 hover:bg-gray-200 text-gray-600 px-3 py-1 rounded text-sm font-medium border border-gray-300 transition-colors"><Icons.RefreshCw className="w-4 h-4"/> 再次發射</button>
-                  </div>
-                  <div className="grid grid-cols-2 gap-2 mb-4 text-left bg-slate-50 p-3 rounded-lg border border-slate-100">
-                    <div><div className="text-xs text-gray-500">完全脫靶機率</div><div className="text-lg font-bold text-gray-700">{PROBABILITY_DATA[explanationMissileCount - 1].miss}</div></div>
-                    <div><div className="text-xs text-gray-500">至少命中1發機率</div><div className="text-lg font-bold text-red-600">{PROBABILITY_DATA[explanationMissileCount - 1].hit}</div></div>
-                  </div>
-                  <p className="text-xs text-gray-500 mb-4 px-2">{explanationMissileCount === 1 ? "單發命中率僅 50%。畫面中紅色為圓內命中，黑色為脫靶。" : `發射 ${explanationMissileCount} 枚，確保命中的機率大幅提升。`}</p>
-                  <button onClick={() => startLevel(1)} className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-full font-bold shadow-lg flex items-center gap-2 mx-auto transition-transform hover:scale-105 text-sm">下一步：實際體驗 CEP <Icons.ArrowRight className="w-4 h-4"/></button>
-                </div>
-              </div>
-            )}
-
-            {/* Modal & Overlays */}
-            {showCepModal && (
-              <div className="absolute inset-0 bg-black/60 z-50 flex items-center justify-center p-4">
-                <div className="bg-white rounded-lg shadow-2xl p-6 max-w-md w-full relative animate-fadeIn">
-                  <button onClick={() => setShowCepModal(false)} className="absolute top-4 right-4 text-gray-400 hover:text-gray-600"><Icons.X className="w-6 h-6" /></button>
-                  <h3 className="text-xl font-bold text-slate-800 mb-4 flex items-center gap-2"><Icons.BookOpen className="text-blue-600 w-6 h-6"/> CEP (圓周誤差率)</h3>
-                  <div className="text-gray-600 space-y-4 text-sm leading-relaxed text-left">
-                    <p><span className="font-bold text-gray-800">定義：</span>CEP 是一個統計學名詞。如果 CEP 是 100 公尺，代表發射很多枚飛彈後，<span className="font-bold text-red-600">只有 50% 會落在目標 100 公尺的範圍內</span>。</p>
-                  </div>
-                  <button onClick={() => setShowCepModal(false)} className="mt-6 w-full bg-slate-800 text-white py-2 rounded font-bold hover:bg-slate-700">了解，回到模擬</button>
-                </div>
-              </div>
-            )}
-
-            {gameState === 'playing' && !showBriefing && LEVELS[currentLevel].userCanSetCep && (
-              <div className="absolute top-4 right-4 bg-white/90 p-4 rounded-lg shadow-lg z-0 backdrop-blur-sm border border-gray-200">
-                <h3 className="font-bold text-gray-700 mb-2 flex items-center gap-2"><Icons.MousePointer2 className="w-4 h-4"/> 選擇情境</h3>
-                <div className="flex gap-2">
-                  <button onClick={(e) => { e.stopPropagation(); setSelectedCep(0); }} className={`px-3 py-1 rounded text-sm font-bold transition-colors ${selectedCep === 0 ? 'bg-red-600 text-white' : 'bg-gray-200 text-gray-600 hover:bg-gray-300'}`}>CEP = 0<br/><span className="text-xs font-normal">網路謠言</span></button>
-                  <button onClick={(e) => { e.stopPropagation(); setSelectedCep(100); }} className={`px-3 py-1 rounded text-sm font-bold transition-colors ${selectedCep === 100 ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-600 hover:bg-gray-300'}`}>CEP = 100<br/><span className="text-xs font-normal">現實世界</span></button>
-                </div>
-              </div>
-            )}
-
-            {showBriefing && (
-              <div className="absolute inset-0 bg-black/80 flex items-center justify-center p-8 z-10">
-                <div className="bg-white max-w-lg w-full p-6 rounded-lg shadow-2xl text-center animate-fadeIn">
-                  <h2 className="text-2xl font-bold mb-2 text-slate-800">{LEVELS[currentLevel].title}</h2>
-                  <div className={`w-16 h-1 ${LEVELS[currentLevel].color.replace('bg-', 'bg-')} mx-auto mb-4 rounded bg-blue-500`}></div>
-                  <div className="mb-6 text-left bg-gray-50 p-5 rounded border-l-4 border-blue-500">
-                    <p className="text-gray-700 whitespace-pre-wrap leading-relaxed">{LEVELS[currentLevel].description}</p>
-                    <div className="mt-4 pt-4 border-t border-gray-200"><p className="text-sm text-slate-500 italic flex gap-2"><Icons.Info className="w-4 h-4 flex-shrink-0 mt-0.5"/>"{LEVELS[currentLevel].quote}"</p></div>
-                  </div>
-                  <button onClick={() => setShowBriefing(false)} className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-10 rounded-full transition-all transform hover:scale-105 shadow-lg flex items-center gap-2 mx-auto"><Icons.Play className="w-5 h-5" fill="currentColor" /> {LEVELS[currentLevel].mapType === 'explanation' ? '開始演示' : '開始模擬'}</button>
-                </div>
-              </div>
-            )}
-
-            {gameState === 'summary' && (
-              <div className="absolute inset-0 bg-black/85 flex items-center justify-center p-8 z-10">
-                <div className="bg-white max-w-lg w-full p-6 rounded-lg shadow-2xl text-center">
-                  <h2 className="text-3xl font-bold mb-6 text-gray-800">模擬結束</h2>
-                  <div className="grid grid-cols-2 gap-4 mb-6">
-                    <div className="bg-green-50 p-4 rounded border border-green-100"><div className="text-4xl font-bold text-green-600">{militaryHits}</div><div className="text-sm text-gray-600 font-bold">成功命中目標</div></div>
-                    <div className="bg-red-50 p-4 rounded border border-red-100"><div className="text-4xl font-bold text-red-600">{civilianHits}</div><div className="text-sm text-gray-600 font-bold">誤擊民用設施</div></div>
-                  </div>
-                  <div className="mb-8 text-left bg-orange-50 p-4 rounded border-l-4 border-orange-400">
-                    <h3 className="font-bold text-orange-800 mb-2">戰術分析</h3>
-                    <p className="text-sm text-gray-700 leading-relaxed">
-                      {currentLevel === 1 && "這就是現實。即使瞄準了，偏差仍會讓飛彈落在目標外。"}
-                      {currentLevel === 2 && "看到那些落在學校或街道上的飛彈了嗎？在都市區使用彈道飛彈，伴隨的就是高度的附帶損傷與政治代價。"}
-                    </p>
-                  </div>
-                  <div className="flex justify-center gap-4">
-                    <button onClick={() => startLevel(currentLevel)} className="flex items-center gap-2 px-5 py-2 border border-gray-300 rounded hover:bg-gray-100 text-gray-600 font-medium transition-colors"><Icons.RotateCcw className="w-4 h-4"/> 重試本關</button>
-                    <button onClick={returnToMenu} className="bg-slate-800 hover:bg-slate-900 text-white px-8 py-2 rounded font-bold shadow-md transition-colors flex items-center gap-2"><Icons.Home className="w-4 h-4"/> 回主選單</button>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {LEVELS[currentLevel].mapType !== 'explanation' && (
-              <div className="absolute top-4 left-4 flex flex-col gap-2 pointer-events-none">
-                <div className="bg-black/70 text-white p-3 rounded-lg backdrop-blur-sm border border-white/10 shadow-lg">
-                  <div className="text-xs text-gray-300 uppercase tracking-wider mb-1">Missiles Left</div>
-                  <div className="text-3xl font-mono text-red-400 font-bold">{missilesLeft}</div>
-                </div>
-              </div>
-            )}
-          </div>
-        )}
-
-        {/* --- CONTROL PANEL --- */}
-        {gameState !== 'menu' && gameState !== 'bibliography' && LEVELS[currentLevel].mapType !== 'explanation' && (
-          <div className="p-4 bg-gray-50 border-t border-gray-200 shrink-0">
-            <div className="flex gap-6 h-32">
-              <div className="w-1/3 flex flex-col justify-between">
-                 <div>
-                   <h3 className="font-bold text-gray-700 flex items-center gap-2 mb-2"><Icons.Target className="text-blue-600 w-4 h-4"/> 操作說明</h3>
-                   <p className="text-sm text-gray-600 leading-relaxed">{currentLevel === 1 ? "右上角可切換 CEP 模式。點擊畫面發射飛彈。" : "移動滑鼠瞄準，點擊左鍵發射。紅色圓圈為 CEP (50% 落點機率範圍)。"}</p>
-                 </div>
-                 <div className="mt-2">
-                   <div className="flex justify-between text-xs text-gray-500 mb-1"><span>精準 (0m)</span><span>偏差 ({selectedCep}m)</span></div>
-                   <div className="w-full bg-gray-200 rounded-full h-2 overflow-hidden"><div className="bg-gradient-to-r from-green-500 to-red-500 h-full transition-all duration-500" style={{width: `${Math.min((selectedCep / 200) * 100, 100)}%`}}></div></div>
-                 </div>
-              </div>
-              <div className="w-2/3 bg-slate-900 text-green-400 font-mono text-sm p-3 rounded shadow-inner overflow-y-auto leading-snug">
-                {logs.length === 0 ? <div className="h-full flex items-center justify-center opacity-30 text-center">-- 等待戰術指令 --<br/>READY TO FIRE</div> : logs.map((log, i) => <div key={i} className="border-b border-gray-800 pb-1 mb-1 last:border-0 hover:bg-white/5 transition-colors"><span className="opacity-50 mr-2">[{logs.length - i}]</span>{log}</div>)}
-              </div>
-            </div>
-          </div>
-        )}
-      </div>
-    </div>
-  );
-};
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+</body>
+</html>
