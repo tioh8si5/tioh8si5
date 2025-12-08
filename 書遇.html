@@ -1,0 +1,846 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>書遇 BookBond</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- React & ReactDOM -->
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+    
+    <!-- Babel for JSX -->
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+    <!-- Google Fonts (Noto Sans TC) -->
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
+
+    <style>
+        body {
+            font-family: 'Noto Sans TC', sans-serif;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes slideInRight {
+            from { opacity: 0; transform: translateX(20px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-5px); }
+            75% { transform: translateX(5px); }
+        }
+        .animate-fade-in { animation: fadeIn 0.5s ease-out; }
+        .animate-fade-in-up { animation: fadeInUp 0.5s ease-out; }
+        .animate-slide-in-right { animation: slideInRight 0.3s ease-out; }
+        .animate-shake { animation: shake 0.3s ease-in-out; }
+    </style>
+</head>
+<body class="bg-stone-50 text-stone-800">
+
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect } = React;
+
+        // --- Icons (SVG Components replacement for lucide-react) ---
+        const IconBase = ({ children, size = 24, className = "" }) => (
+            <svg 
+                xmlns="http://www.w3.org/2000/svg" 
+                width={size} 
+                height={size} 
+                viewBox="0 0 24 24" 
+                fill="none" 
+                stroke="currentColor" 
+                strokeWidth="2" 
+                strokeLinecap="round" 
+                strokeLinejoin="round" 
+                className={className}
+            >
+                {children}
+            </svg>
+        );
+
+        const BookOpen = (props) => <IconBase {...props}><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></IconBase>;
+        const Heart = (props) => <IconBase {...props}><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/></IconBase>;
+        const MessageCircle = (props) => <IconBase {...props}><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></IconBase>;
+        const Lock = (props) => <IconBase {...props}><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></IconBase>;
+        const Unlock = (props) => <IconBase {...props}><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 9.9-1"/></IconBase>;
+        const User = (props) => <IconBase {...props}><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></IconBase>;
+        const Plus = (props) => <IconBase {...props}><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></IconBase>;
+        const X = (props) => <IconBase {...props}><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></IconBase>;
+        const CheckCircle = (props) => <IconBase {...props}><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></IconBase>;
+        const AlertCircle = (props) => <IconBase {...props}><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></IconBase>;
+        const Sparkles = (props) => <IconBase {...props}><path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z"/><path d="M5 3v4"/><path d="M9 3v4"/><path d="M3 5h4"/><path d="M3 9h4"/></IconBase>;
+        const ArrowLeft = (props) => <IconBase {...props}><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></IconBase>;
+        const HelpCircle = (props) => <IconBase {...props}><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></IconBase>;
+        const Settings = (props) => <IconBase {...props}><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.38a2 2 0 0 0-.73-2.73l-.15-.1a2 2 0 0 1-1-1.72v-.51a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></IconBase>;
+        const Edit2 = (props) => <IconBase {...props}><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"/></IconBase>;
+        const Trash2 = (props) => <IconBase {...props}><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></IconBase>;
+        const Save = (props) => <IconBase {...props}><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></IconBase>;
+        const PlusCircle = (props) => <IconBase {...props}><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></IconBase>;
+        const MinusCircle = (props) => <IconBase {...props}><circle cx="12" cy="12" r="10"/><line x1="8" y1="12" x2="16" y2="12"/></IconBase>;
+        const LayoutDashboard = (props) => <IconBase {...props}><rect x="3" y="3" width="7" height="9"/><rect x="14" y="3" width="7" height="5"/><rect x="14" y="12" width="7" height="9"/><rect x="3" y="16" width="7" height="5"/></IconBase>;
+
+        // --- 模擬數據 (Mock Data) ---
+        const INITIAL_POSTS = [
+          {
+            id: 1,
+            user: "文青小雅",
+            avatarColor: "bg-pink-500",
+            bookTitle: "小王子",
+            author: "安托萬·德·聖修伯里",
+            coverColor: "bg-indigo-900", 
+            description: "這本書教會我什麼是『馴服』。如果你也懂狐狸的秘密，我們或許能成為朋友。",
+            contactInfo: "LINE ID: prince_rose_1943",
+            questions: [
+              {
+                q: "故事一開始，敘述者小時候畫的第一號作品是什麼？",
+                options: ["一頂帽子", "吞了象的蛇", "一隻綿羊", "B-612星球"],
+                ans: 1
+              },
+              {
+                q: "小王子在他的星球上必須小心清理什麼植物？",
+                options: ["猴麵包樹", "玫瑰花", "仙人掌", "藤蔓"],
+                ans: 0
+              },
+              {
+                q: "狐狸告訴小王子的秘密是什麼？",
+                options: ["人要及時行樂", "愛是自私的", "只有用心才能看清事物本質", "大人的世界很複雜"],
+                ans: 2
+              }
+            ]
+          },
+          {
+            id: 101, // 同一本書的第二位出題者
+            user: "狐狸哲學家",
+            avatarColor: "bg-orange-500",
+            bookTitle: "小王子", // 同一本書
+            author: "安托萬·德·聖修伯里",
+            coverColor: "bg-indigo-900",
+            description: "真正重要的東西，用眼睛是看不見的。我想找尋能理解這句話的人。",
+            contactInfo: "IG: @fox_philosophy",
+            questions: [
+              {
+                q: "小王子最後送給飛行員的禮物是什麼？",
+                options: ["會笑的星星", "一朵玫瑰", "一隻綿羊", "一條圍巾"],
+                ans: 0
+              },
+              {
+                q: "在這個故事中，『馴服』的意思是指？",
+                options: ["控制對方", "建立連結", "訓練寵物", "互相依賴"],
+                ans: 1
+              }
+            ]
+          },
+          {
+            id: 2,
+            user: "CyberReader",
+            avatarColor: "bg-cyan-600",
+            bookTitle: "1984",
+            author: "喬治·歐威爾",
+            coverColor: "bg-slate-800",
+            description: "尋找對反烏托邦題材感興趣的人。Big Brother is watching you.",
+            contactInfo: "Telegram: @winston_smith",
+            questions: [
+              {
+                q: "大洋國的真理部負責什麼工作？",
+                options: ["維護治安", "篡改歷史與新聞", "發動戰爭", "生產糧食"],
+                ans: 1
+              },
+              {
+                q: "書中主角溫斯頓最害怕的東西是什麼？",
+                options: ["老鼠", "黑暗", "2+2=5", "思想警察"],
+                ans: 0
+              }
+            ]
+          },
+          {
+            id: 3,
+            user: "村上迷",
+            avatarColor: "bg-green-600",
+            bookTitle: "挪威的森林",
+            author: "村上春樹",
+            coverColor: "bg-red-700",
+            description: "每個人都有一片屬於自己的森林。想找人聊聊渡邊與直子的故事。",
+            contactInfo: "Email: norway_wood@example.com",
+            questions: [
+              {
+                q: "小說標題來自哪一個樂團的歌曲？",
+                options: ["Pink Floyd", "The Beatles", "Queen", "Oasis"],
+                ans: 1
+              },
+              {
+                q: "綠子這角色的個性特徵比較偏向？",
+                options: ["憂鬱沉靜", "活潑直率", "神秘莫測", "冷酷無情"],
+                ans: 1
+              }
+            ]
+          }
+        ];
+
+        // --- 輔助函式：根據書名分組 ---
+        const groupPostsByBook = (posts) => {
+          const groups = {};
+          posts.forEach(post => {
+            if (!groups[post.bookTitle]) {
+              groups[post.bookTitle] = {
+                bookTitle: post.bookTitle,
+                author: post.author,
+                coverColor: post.coverColor,
+                challenges: []
+              };
+            }
+            groups[post.bookTitle].challenges.push(post);
+          });
+          return Object.values(groups);
+        };
+
+        // --- Main Component ---
+        function BookBondApp() {
+          const [posts, setPosts] = useState(INITIAL_POSTS);
+          const [view, setView] = useState('home'); // home, bookDetail, quiz, create, admin, adminEdit
+          const [selectedBook, setSelectedBook] = useState(null); 
+          const [activePost, setActivePost] = useState(null); 
+          const [editingPost, setEditingPost] = useState(null); // 用於後台編輯
+          const [myUnlockedIds, setMyUnlockedIds] = useState([]);
+
+          // --- 導航與視圖切換 ---
+          const handleViewBook = (bookGroup) => {
+            setSelectedBook(bookGroup);
+            setView('bookDetail');
+          };
+
+          const handleStartQuiz = (post) => {
+            setActivePost(post);
+            setView('quiz');
+          };
+
+          const handleEditPost = (post) => {
+            setEditingPost(post);
+            setView('adminEdit');
+          };
+
+          // --- 數據操作 (CRUD) ---
+          const handleAddPost = (newPost) => {
+            setPosts([newPost, ...posts]);
+            setView('home');
+          };
+
+          const handleUpdatePost = (updatedPost) => {
+            const newPosts = posts.map(p => p.id === updatedPost.id ? updatedPost : p);
+            setPosts(newPosts);
+            setEditingPost(null);
+            setView('admin'); // 回到後台列表
+          };
+
+          const handleDeletePost = (id) => {
+            if (window.confirm("確定要刪除這個挑戰嗎？此操作無法復原。")) {
+              setPosts(posts.filter(p => p.id !== id));
+            }
+          };
+
+          const handleUnlock = (postId) => {
+            if (!myUnlockedIds.includes(postId)) {
+              setMyUnlockedIds([...myUnlockedIds, postId]);
+            }
+          };
+
+          const bookGroups = groupPostsByBook(posts);
+
+          return (
+            <div className="min-h-screen bg-stone-50 font-sans text-stone-800">
+              {/* 導航欄 */}
+              <nav className="bg-white shadow-sm sticky top-0 z-10 px-4 py-3 flex justify-between items-center">
+                <div className="flex items-center space-x-2 cursor-pointer" onClick={() => setView('home')}>
+                  <div className="bg-amber-600 p-2 rounded-lg text-white">
+                    <BookOpen size={20} />
+                  </div>
+                  <span className="text-xl font-bold tracking-tight text-amber-900">書遇 BookBond</span>
+                </div>
+                
+                <div className="flex items-center space-x-2">
+                    {/* 後台入口按鈕 */}
+                    <button 
+                      onClick={() => setView('admin')}
+                      className={`p-2 rounded-full transition-colors ${view === 'admin' || view === 'adminEdit' ? 'bg-stone-200 text-stone-800' : 'text-stone-400 hover:bg-stone-100 hover:text-stone-600'}`}
+                      title="管理後台"
+                    >
+                      <Settings size={20} />
+                    </button>
+                    <button 
+                      onClick={() => setView('create')}
+                      className="flex items-center space-x-1 bg-stone-800 text-white px-4 py-2 rounded-full hover:bg-stone-700 transition-colors text-sm font-medium"
+                    >
+                      <Plus size={16} />
+                      <span>我要出題</span>
+                    </button>
+                </div>
+              </nav>
+
+              {/* 主要內容區 */}
+              <main className="max-w-4xl mx-auto p-4 md:p-6">
+                {/* --- 首頁視圖 --- */}
+                {view === 'home' && (
+                  <div className="animate-fade-in">
+                     <div className="mb-6 text-center md:text-left">
+                        <h1 className="text-2xl font-bold text-stone-800">書架</h1>
+                        <p className="text-stone-500">選擇一本書，看看裡面藏著誰的靈魂考驗。</p>
+                     </div>
+                     
+                     <div className="grid grid-cols-2 md:grid-cols-3 gap-6">
+                        {bookGroups.map((group) => (
+                          <div 
+                            key={group.bookTitle} 
+                            onClick={() => handleViewBook(group)}
+                            className="bg-white rounded-xl shadow-sm hover:shadow-lg transition-all duration-300 cursor-pointer border border-stone-200 overflow-hidden group"
+                          >
+                            <div className={`h-40 ${group.coverColor} flex items-center justify-center p-4 relative`}>
+                                <BookOpen className="text-white/20 w-16 h-16 absolute" />
+                                <h3 className="text-white font-bold text-center relative z-10 line-clamp-2">{group.bookTitle}</h3>
+                            </div>
+                            <div className="p-4">
+                                <p className="text-xs text-stone-500 mb-1">{group.author}</p>
+                                <div className="flex items-center justify-between mt-3">
+                                     <span className="text-xs font-bold text-amber-600 bg-amber-50 px-2 py-1 rounded-full">
+                                        {group.challenges.length} 位出題人
+                                     </span>
+                                </div>
+                            </div>
+                          </div>
+                        ))}
+                     </div>
+                  </div>
+                )}
+
+                {/* --- 書籍詳情視圖 --- */}
+                {view === 'bookDetail' && selectedBook && (
+                  <div className="animate-slide-in-right">
+                    <button onClick={() => setView('home')} className="flex items-center text-stone-500 hover:text-stone-800 mb-4 font-medium">
+                        <ArrowLeft size={18} className="mr-1" /> 返回書架
+                    </button>
+
+                    <div className="bg-white rounded-2xl shadow-sm p-6 mb-6 flex items-start md:items-center gap-6 border border-stone-100">
+                        <div className={`w-24 h-32 ${selectedBook.coverColor} rounded-lg shadow-inner flex items-center justify-center flex-shrink-0`}>
+                            <BookOpen className="text-white/30" />
+                        </div>
+                        <div>
+                            <h1 className="text-2xl font-bold text-stone-800 mb-1">{selectedBook.bookTitle}</h1>
+                            <p className="text-stone-500 mb-4">{selectedBook.author}</p>
+                            <div className="inline-flex items-center text-sm text-stone-400 bg-stone-100 px-3 py-1 rounded-full">
+                                <User size={14} className="mr-2" />
+                                目前有 {selectedBook.challenges.length} 位讀者發起挑戰
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="space-y-6">
+                        {selectedBook.challenges.map(post => (
+                            <div key={post.id} className="bg-white rounded-xl border border-stone-200 shadow-sm overflow-hidden hover:border-amber-200 transition-colors">
+                                <div className="p-5">
+                                    <div className="flex items-center justify-between mb-4">
+                                        <div className="flex items-center space-x-3">
+                                            <div className={`w-10 h-10 rounded-full ${post.avatarColor} flex items-center justify-center text-white font-bold shadow-sm`}>
+                                                {post.user[0]}
+                                            </div>
+                                            <div>
+                                                <p className="font-bold text-stone-800 text-sm">{post.user}</p>
+                                                <p className="text-xs text-stone-400">發起了挑戰</p>
+                                            </div>
+                                        </div>
+                                        {myUnlockedIds.includes(post.id) ? (
+                                            <span className="text-green-600 bg-green-50 px-2 py-1 rounded text-xs font-bold flex items-center">
+                                                <Unlock size={12} className="mr-1" /> 已配對
+                                            </span>
+                                        ) : (
+                                            <span className="text-stone-400 bg-stone-100 px-2 py-1 rounded text-xs font-bold flex items-center">
+                                                <Lock size={12} className="mr-1" /> 未解鎖
+                                            </span>
+                                        )}
+                                    </div>
+                                    <p className="text-stone-600 text-sm mb-4 bg-stone-50 p-3 rounded-lg italic">"{post.description}"</p>
+                                    <div className="bg-amber-50/50 border border-amber-100 rounded-lg p-4 mb-4">
+                                        <div className="flex items-start">
+                                            <div className="bg-amber-100 text-amber-700 text-xs font-bold px-2 py-0.5 rounded mr-2 mt-0.5 whitespace-nowrap">Q1</div>
+                                            <p className="font-bold text-stone-800 text-sm leading-relaxed">{post.questions[0].q}</p>
+                                        </div>
+                                        <div className="mt-3 pl-8 space-y-1">
+                                            {post.questions[0].options.slice(0, 2).map((opt, i) => (
+                                                <div key={i} className="text-xs text-stone-500 flex items-center">
+                                                    <div className="w-3 h-3 border border-stone-300 rounded-full mr-2"></div>
+                                                    {opt}
+                                                </div>
+                                            ))}
+                                            <div className="text-xs text-stone-400 italic pl-5">... 還有更多選項</div>
+                                        </div>
+                                    </div>
+                                    <button 
+                                        onClick={() => handleStartQuiz(post)}
+                                        className={`w-full py-2.5 rounded-lg font-bold text-sm transition-all flex items-center justify-center
+                                            ${myUnlockedIds.includes(post.id)
+                                                ? 'bg-green-100 text-green-700 hover:bg-green-200'
+                                                : 'bg-stone-800 text-white hover:bg-stone-700 shadow-md'
+                                            }`}
+                                    >
+                                        {myUnlockedIds.includes(post.id) ? "查看聯繫方式" : "回答問題以解鎖"}
+                                    </button>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* --- 測驗視圖 --- */}
+                {view === 'quiz' && activePost && (
+                  <QuizInterface 
+                    post={activePost} 
+                    onClose={() => {
+                        const group = bookGroups.find(g => g.bookTitle === activePost.bookTitle);
+                        setSelectedBook(group);
+                        setView('bookDetail');
+                    }}
+                    onSuccess={() => handleUnlock(activePost.id)}
+                    isAlreadyUnlocked={myUnlockedIds.includes(activePost.id)}
+                  />
+                )}
+
+                {/* --- 創建貼文視圖 --- */}
+                {view === 'create' && (
+                  <CreatePostForm 
+                    onCancel={() => setView('home')} 
+                    onSubmit={handleAddPost} 
+                  />
+                )}
+
+                {/* --- 管理後台列表視圖 --- */}
+                {view === 'admin' && (
+                  <div className="animate-fade-in">
+                     <div className="flex items-center justify-between mb-6">
+                        <h1 className="text-2xl font-bold text-stone-800 flex items-center">
+                            <LayoutDashboard className="mr-2" /> 管理後台
+                        </h1>
+                        <button onClick={() => setView('home')} className="text-stone-500 hover:text-stone-800 font-medium">
+                            退出後台
+                        </button>
+                     </div>
+
+                     <div className="bg-white rounded-xl shadow-sm border border-stone-200 overflow-hidden">
+                        <table className="w-full text-left border-collapse">
+                            <thead>
+                                <tr className="bg-stone-50 border-b border-stone-200 text-stone-500 text-sm">
+                                    <th className="p-4 font-bold">書籍名稱</th>
+                                    <th className="p-4 font-bold">出題者</th>
+                                    <th className="p-4 font-bold">題目數量</th>
+                                    <th className="p-4 font-bold text-right">操作</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {posts.map(post => (
+                                    <tr key={post.id} className="border-b border-stone-100 hover:bg-stone-50">
+                                        <td className="p-4">
+                                            <div className="font-bold text-stone-800">{post.bookTitle}</div>
+                                            <div className="text-xs text-stone-400">{post.author}</div>
+                                        </td>
+                                        <td className="p-4 flex items-center">
+                                            <div className={`w-6 h-6 rounded-full ${post.avatarColor} flex items-center justify-center text-white text-[10px] mr-2`}>
+                                                {post.user[0]}
+                                            </div>
+                                            <span className="text-stone-600 text-sm">{post.user}</span>
+                                        </td>
+                                        <td className="p-4 text-stone-600 text-sm">
+                                            {post.questions.length} 題
+                                        </td>
+                                        <td className="p-4 text-right space-x-2">
+                                            <button 
+                                                onClick={() => handleEditPost(post)}
+                                                className="inline-flex items-center px-3 py-1.5 bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-100 text-xs font-bold transition-colors"
+                                            >
+                                                <Edit2 size={14} className="mr-1" /> 編輯
+                                            </button>
+                                            <button 
+                                                onClick={() => handleDeletePost(post.id)}
+                                                className="inline-flex items-center px-3 py-1.5 bg-red-50 text-red-600 rounded-lg hover:bg-red-100 text-xs font-bold transition-colors"
+                                            >
+                                                <Trash2 size={14} className="mr-1" /> 刪除
+                                            </button>
+                                        </td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                        {posts.length === 0 && (
+                            <div className="p-8 text-center text-stone-400">目前沒有任何挑戰資料</div>
+                        )}
+                     </div>
+                  </div>
+                )}
+
+                {/* --- 管理後台編輯視圖 --- */}
+                {view === 'adminEdit' && editingPost && (
+                    <AdminEditor 
+                        post={editingPost}
+                        onSave={handleUpdatePost}
+                        onCancel={() => setView('admin')}
+                    />
+                )}
+              </main>
+            </div>
+          );
+        }
+
+        // --- 管理後台編輯器組件 ---
+        function AdminEditor({ post, onSave, onCancel }) {
+            const [formData, setFormData] = useState(JSON.parse(JSON.stringify(post))); // Deep copy
+
+            // 更新基本欄位
+            const handleChange = (e) => {
+                setFormData({ ...formData, [e.target.name]: e.target.value });
+            };
+
+            // 更新題目
+            const handleQuestionChange = (qIndex, field, value) => {
+                const newQuestions = [...formData.questions];
+                newQuestions[qIndex] = { ...newQuestions[qIndex], [field]: value };
+                setFormData({ ...formData, questions: newQuestions });
+            };
+
+            // 更新選項
+            const handleOptionChange = (qIndex, oIndex, value) => {
+                const newQuestions = [...formData.questions];
+                const newOptions = [...newQuestions[qIndex].options];
+                newOptions[oIndex] = value;
+                newQuestions[qIndex].options = newOptions;
+                setFormData({ ...formData, questions: newQuestions });
+            };
+
+            // 新增題目
+            const addQuestion = () => {
+                const newQ = {
+                    q: "新題目",
+                    options: ["選項 A", "選項 B", "選項 C", "選項 D"],
+                    ans: 0
+                };
+                setFormData({ ...formData, questions: [...formData.questions, newQ] });
+            };
+
+            // 刪除題目
+            const removeQuestion = (index) => {
+                if (formData.questions.length <= 1) {
+                    alert("至少需要保留一個題目！");
+                    return;
+                }
+                const newQuestions = formData.questions.filter((_, i) => i !== index);
+                setFormData({ ...formData, questions: newQuestions });
+            };
+
+            return (
+                <div className="bg-white rounded-2xl shadow-lg border border-stone-200 animate-fade-in-up">
+                    <div className="p-6 border-b border-stone-100 flex justify-between items-center bg-stone-50 rounded-t-2xl">
+                        <h2 className="text-xl font-bold text-stone-800 flex items-center">
+                            <Edit2 className="mr-2" size={20} /> 編輯挑戰內容
+                        </h2>
+                        <button onClick={onCancel} className="text-stone-400 hover:text-stone-600"><X /></button>
+                    </div>
+
+                    <div className="p-6 md:p-8 space-y-8">
+                        {/* 基本資訊區塊 */}
+                        <section>
+                            <h3 className="text-sm font-bold text-stone-400 uppercase tracking-wider mb-4 border-b border-stone-100 pb-2">書籍與簡介</h3>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                                <div>
+                                    <label className="block text-sm font-bold text-stone-700 mb-1">書名</label>
+                                    <input name="bookTitle" value={formData.bookTitle} onChange={handleChange} className="w-full p-2 border border-stone-200 rounded focus:ring-2 focus:ring-blue-500 outline-none" />
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-bold text-stone-700 mb-1">作者</label>
+                                    <input name="author" value={formData.author} onChange={handleChange} className="w-full p-2 border border-stone-200 rounded focus:ring-2 focus:ring-blue-500 outline-none" />
+                                </div>
+                            </div>
+                            <div className="mb-4">
+                                <label className="block text-sm font-bold text-stone-700 mb-1">簡介 (挑戰宣言)</label>
+                                <textarea name="description" value={formData.description} onChange={handleChange} className="w-full p-2 border border-stone-200 rounded h-20 focus:ring-2 focus:ring-blue-500 outline-none" />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-bold text-stone-700 mb-1">聯繫方式</label>
+                                <input name="contactInfo" value={formData.contactInfo} onChange={handleChange} className="w-full p-2 border border-stone-200 rounded bg-stone-50 font-mono text-sm" />
+                            </div>
+                        </section>
+
+                        {/* 題目編輯區塊 */}
+                        <section>
+                            <div className="flex justify-between items-center mb-4 border-b border-stone-100 pb-2">
+                                 <h3 className="text-sm font-bold text-stone-400 uppercase tracking-wider">題目設定 ({formData.questions.length} 題)</h3>
+                                 <button type="button" onClick={addQuestion} className="text-blue-600 hover:text-blue-700 text-xs font-bold flex items-center">
+                                    <PlusCircle size={14} className="mr-1"/> 新增題目
+                                 </button>
+                            </div>
+
+                            <div className="space-y-6">
+                                {formData.questions.map((q, qIndex) => (
+                                    <div key={qIndex} className="bg-stone-50 p-4 rounded-xl border border-stone-200 relative group">
+                                        <div className="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity">
+                                            <button onClick={() => removeQuestion(qIndex)} className="text-red-400 hover:text-red-600 p-1">
+                                                <Trash2 size={16} />
+                                            </button>
+                                        </div>
+                                        
+                                        <div className="mb-3 pr-8">
+                                            <label className="block text-xs font-bold text-stone-500 mb-1">題目 {qIndex + 1}</label>
+                                            <input 
+                                                value={q.q} 
+                                                onChange={(e) => handleQuestionChange(qIndex, 'q', e.target.value)}
+                                                className="w-full p-2 border border-stone-200 rounded focus:border-amber-500 outline-none font-medium"
+                                            />
+                                        </div>
+
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-2 pl-4 border-l-2 border-stone-200">
+                                            {q.options.map((opt, oIndex) => (
+                                                <div key={oIndex} className="flex items-center">
+                                                    <input 
+                                                        type="radio" 
+                                                        name={`ans-${qIndex}`}
+                                                        checked={q.ans === oIndex}
+                                                        onChange={() => handleQuestionChange(qIndex, 'ans', oIndex)}
+                                                        className="mr-2 text-amber-600 focus:ring-amber-500"
+                                                    />
+                                                    <input 
+                                                        value={opt}
+                                                        onChange={(e) => handleOptionChange(qIndex, oIndex, e.target.value)}
+                                                        className={`w-full p-1.5 text-sm border rounded outline-none ${q.ans === oIndex ? 'border-green-300 bg-green-50 text-green-800 font-bold' : 'border-stone-200'}`}
+                                                    />
+                                                </div>
+                                            ))}
+                                        </div>
+                                        <div className="mt-2 text-[10px] text-stone-400 text-right">* 點擊圓圈設定為正確答案</div>
+                                    </div>
+                                ))}
+                            </div>
+                        </section>
+
+                        <div className="flex justify-end space-x-3 pt-6 border-t border-stone-100">
+                            <button onClick={onCancel} className="px-6 py-2 rounded-lg font-bold text-stone-500 hover:bg-stone-100">取消</button>
+                            <button onClick={() => onSave(formData)} className="px-6 py-2 rounded-lg font-bold bg-blue-600 text-white hover:bg-blue-700 shadow-md flex items-center">
+                                <Save size={18} className="mr-2" /> 儲存變更
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            );
+        }
+
+        // --- 測驗介面組件 ---
+        function QuizInterface({ post, onClose, onSuccess, isAlreadyUnlocked }) {
+          const [currentStep, setCurrentStep] = useState(0); 
+          const [answers, setAnswers] = useState({});
+          const [showError, setShowError] = useState(false);
+          const [shake, setShake] = useState(false);
+
+          useEffect(() => {
+            if (isAlreadyUnlocked) {
+              setCurrentStep(99);
+            }
+          }, [isAlreadyUnlocked]);
+
+          const handleOptionSelect = (qIndex, optionIndex) => {
+            setAnswers({ ...answers, [qIndex]: optionIndex });
+            setShowError(false);
+          };
+
+          const handleNext = () => {
+            const currentQ = post.questions[currentStep];
+            const userAns = answers[currentStep];
+
+            if (userAns === undefined) {
+                setShowError(true);
+                return;
+            }
+
+            if (userAns !== currentQ.ans) {
+              setShake(true);
+              setShowError(true);
+              setTimeout(() => setShake(false), 500);
+              return;
+            }
+
+            if (currentStep < post.questions.length - 1) {
+              setCurrentStep(currentStep + 1);
+            } else {
+              onSuccess();
+              setCurrentStep(99);
+            }
+          };
+
+          if (currentStep === 99) {
+            return (
+              <div className="bg-white rounded-2xl shadow-xl p-8 max-w-lg mx-auto text-center animate-fade-in-up mt-8">
+                <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6 text-green-600">
+                  <CheckCircle size={40} />
+                </div>
+                <h2 className="text-2xl font-bold text-stone-800 mb-2">靈魂共鳴！</h2>
+                <p className="text-stone-600 mb-8">你通過了 {post.user} 的《{post.bookTitle}》挑戰。</p>
+                
+                <div className="bg-stone-50 border-2 border-dashed border-stone-200 rounded-xl p-6 mb-8">
+                  <p className="text-xs text-stone-400 uppercase tracking-wider font-bold mb-2">Contact Info</p>
+                  <p className="text-xl font-mono text-stone-800 select-all font-bold">{post.contactInfo}</p>
+                </div>
+
+                <button onClick={onClose} className="w-full bg-stone-800 text-white py-3 rounded-xl font-bold hover:bg-stone-700 transition-colors">
+                  返回挑戰列表
+                </button>
+              </div>
+            );
+          }
+
+          const question = post.questions[currentStep];
+
+          return (
+            <div className="bg-white rounded-2xl shadow-xl overflow-hidden max-w-2xl mx-auto mt-4 md:mt-8">
+              <div className="bg-stone-100 h-2 w-full">
+                <div className="bg-amber-500 h-full transition-all duration-300" style={{ width: `${((currentStep + 1) / post.questions.length) * 100}%` }}></div>
+              </div>
+              <div className="p-6 md:p-8">
+                <div className="flex justify-between items-center mb-6">
+                    <span className="text-xs font-bold text-amber-600 bg-amber-50 px-2 py-1 rounded-full">QUESTION {currentStep + 1} / {post.questions.length}</span>
+                    <button onClick={onClose} className="text-stone-400 hover:text-stone-600"><X size={20} /></button>
+                </div>
+                <h3 className="text-xl font-bold text-stone-800 mb-8 leading-relaxed">{question.q}</h3>
+                <div className={`space-y-3 ${shake ? 'animate-shake' : ''}`}>
+                  {question.options.map((opt, idx) => (
+                    <button
+                      key={idx}
+                      onClick={() => handleOptionSelect(currentStep, idx)}
+                      className={`w-full text-left p-4 rounded-xl border-2 transition-all duration-200 flex items-center ${answers[currentStep] === idx ? 'border-amber-500 bg-amber-50 text-amber-900' : 'border-stone-100 hover:border-stone-300 text-stone-600'}`}
+                    >
+                      <div className={`w-6 h-6 rounded-full border-2 mr-4 flex items-center justify-center flex-shrink-0 ${answers[currentStep] === idx ? 'border-amber-500 bg-amber-500' : 'border-stone-300'}`}>
+                        {answers[currentStep] === idx && <div className="w-2 h-2 bg-white rounded-full"></div>}
+                      </div>
+                      {opt}
+                    </button>
+                  ))}
+                </div>
+                {showError && (
+                  <div className="mt-4 flex items-center text-red-500 text-sm font-medium animate-pulse">
+                    <AlertCircle size={16} className="mr-2" />
+                    {answers[currentStep] === undefined ? "請選擇一個答案" : "答案不正確，請再試一次"}
+                  </div>
+                )}
+                <div className="mt-8 pt-6 border-t border-stone-100 flex justify-end">
+                  <button onClick={handleNext} className="bg-stone-800 text-white px-8 py-3 rounded-xl font-bold hover:bg-stone-700 transition-colors shadow-lg shadow-stone-200">
+                    {currentStep === post.questions.length - 1 ? "提交答案" : "下一題"}
+                  </button>
+                </div>
+              </div>
+            </div>
+          );
+        }
+
+        // --- 建立帖子表單 ---
+        function CreatePostForm({ onCancel, onSubmit }) {
+          const [formData, setFormData] = useState({
+            bookTitle: '',
+            author: '',
+            description: '',
+            contactInfo: '',
+            q1: '', a1: '', o1_1: '', o1_2: '', o1_3: ''
+          });
+
+          const handleChange = (e) => {
+            setFormData({...formData, [e.target.name]: e.target.value});
+          };
+
+          const handleSubmit = (e) => {
+            e.preventDefault();
+            const newPost = {
+              id: Date.now(),
+              user: "我 (Me)",
+              avatarColor: "bg-blue-500",
+              bookTitle: formData.bookTitle,
+              author: formData.author,
+              coverColor: "bg-teal-700",
+              description: formData.description,
+              contactInfo: formData.contactInfo,
+              questions: [
+                {
+                  q: formData.q1,
+                  options: [formData.o1_1, formData.o1_2, formData.o1_3, "以上皆非"],
+                  ans: 0 
+                }
+              ]
+            };
+            onSubmit(newPost);
+          };
+
+          return (
+            <div className="bg-white rounded-2xl shadow-lg p-6 md:p-8 animate-fade-in-up">
+              <div className="flex justify-between items-center mb-6 border-b border-stone-100 pb-4">
+                <div>
+                    <h2 className="text-xl font-bold text-stone-800">發起書籍挑戰</h2>
+                    <p className="text-sm text-stone-500">上傳你的題目，尋找知音</p>
+                </div>
+                <button onClick={onCancel} className="text-stone-400 hover:text-stone-600"><X /></button>
+              </div>
+
+              <form onSubmit={handleSubmit} className="space-y-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label className="block text-sm font-bold text-stone-700 mb-2">書名</label>
+                        <input required name="bookTitle" onChange={handleChange} className="w-full p-3 bg-stone-50 border border-stone-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500" placeholder="例如：小王子" />
+                    </div>
+                    <div>
+                        <label className="block text-sm font-bold text-stone-700 mb-2">作者</label>
+                        <input required name="author" onChange={handleChange} className="w-full p-3 bg-stone-50 border border-stone-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500" placeholder="例如：安托萬·德·聖修伯里" />
+                    </div>
+                </div>
+
+                <div>
+                    <label className="block text-sm font-bold text-stone-700 mb-2">簡介與心得</label>
+                    <textarea required name="description" onChange={handleChange} className="w-full p-3 bg-stone-50 border border-stone-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500 h-24" placeholder="這本書為何吸引你？你想對挑戰者說什麼？" />
+                </div>
+
+                <div>
+                    <label className="block text-sm font-bold text-stone-700 mb-2">聯繫方式 (對方通過挑戰後顯示)</label>
+                    <input required name="contactInfo" onChange={handleChange} className="w-full p-3 bg-stone-100 border border-stone-300 border-dashed rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500 text-stone-600 font-mono" placeholder="LINE ID / Email / Instagram" />
+                </div>
+
+                <div className="border-t border-stone-100 pt-6">
+                    <h3 className="text-lg font-bold text-stone-800 mb-4 flex items-center">
+                        <Sparkles size={18} className="mr-2 text-amber-500"/> 設定第一題 (公開顯示)
+                    </h3>
+                    <div className="bg-amber-50 p-4 rounded-xl border border-amber-100 space-y-4">
+                        <div>
+                            <label className="block text-xs font-bold text-stone-500 mb-1 uppercase">題目內容</label>
+                            <input required name="q1" onChange={handleChange} className="w-full p-3 border border-stone-200 rounded-lg bg-white" placeholder="輸入問題..." />
+                        </div>
+                        <div className="grid grid-cols-1 gap-2 pl-4 border-l-2 border-green-200">
+                            <input required name="o1_1" onChange={handleChange} className="w-full p-2 border border-green-200 rounded bg-green-50" placeholder="正確答案" />
+                            <input required name="o1_2" onChange={handleChange} className="w-full p-2 border border-stone-200 rounded bg-white" placeholder="錯誤選項 A" />
+                            <input required name="o1_3" onChange={handleChange} className="w-full p-2 border border-stone-200 rounded bg-white" placeholder="錯誤選項 B" />
+                        </div>
+                        <p className="text-xs text-stone-400">* 更多題目可於發布後編輯新增（此為演示版）</p>
+                    </div>
+                </div>
+
+                <div className="pt-4 flex justify-end space-x-3">
+                    <button type="button" onClick={onCancel} className="px-6 py-2 rounded-lg font-bold text-stone-500 hover:bg-stone-100">取消</button>
+                    <button type="submit" className="px-6 py-2 rounded-lg font-bold bg-stone-800 text-white hover:bg-stone-700">發布挑戰</button>
+                </div>
+              </form>
+            </div>
+          );
+        }
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<BookBondApp />);
+    </script>
+</body>
+</html>
