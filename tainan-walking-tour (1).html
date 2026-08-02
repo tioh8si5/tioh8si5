@@ -1,0 +1,846 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1">
+<title>府城行走｜官署建築巡禮</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@400;500;600;700;900&family=Noto+Sans+TC:wght@400;500;600;700&family=Zen+Kaku+Gothic+New:wght@500;700&display=swap');
+
+:root{
+  --paper: #E9DFC7;
+  --paper-light: #F3ECDB;
+  --paper-dark: #DCD0AE;
+  --ink: #2B2419;
+  --ink-soft: #5A5040;
+  --navy: #24344A;
+  --navy-light: #3A4F6B;
+  --seal: #A13425;
+  --seal-light: #C25642;
+  --brass: #8E7530;
+  --locked: #A79D84;
+  --line: #C7BB98;
+  --ok: #4C7A4A;
+}
+
+*{ box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+body{
+  margin: 0;
+  background: var(--paper);
+  background-image:
+    radial-gradient(circle at 20% 10%, rgba(0,0,0,0.03), transparent 40%),
+    radial-gradient(circle at 80% 60%, rgba(0,0,0,0.025), transparent 45%);
+  color: var(--ink);
+  font-family: 'Noto Serif TC', serif;
+  min-height: 100vh;
+}
+
+.wrap{
+  max-width: 560px;
+  margin: 0 auto;
+  padding: 0 0 80px;
+}
+@media (min-width: 700px){
+  .wrap{ max-width: 640px; }
+}
+
+/* ---------- Header ---------- */
+header{
+  padding: 44px 24px 28px;
+  text-align: center;
+  border-bottom: 1px solid var(--line);
+}
+.eyebrow{
+  font-family: 'Zen Kaku Gothic New', sans-serif;
+  font-size: 12px;
+  letter-spacing: 0.35em;
+  color: var(--brass);
+  margin-bottom: 10px;
+}
+h1{
+  font-size: clamp(26px, 6vw, 32px);
+  font-weight: 900;
+  margin: 0 0 8px;
+  letter-spacing: 0.06em;
+  color: var(--navy);
+}
+.sub{
+  font-family: 'Noto Sans TC', sans-serif;
+  font-size: 13.5px;
+  color: var(--ink-soft);
+  line-height: 1.7;
+}
+.progress-bar{
+  margin: 22px auto 0;
+  max-width: 320px;
+  height: 4px;
+  background: var(--paper-dark);
+  border-radius: 2px;
+  overflow: hidden;
+}
+.progress-fill{ height: 100%; background: var(--seal); transition: width 0.6s ease; }
+.progress-label{
+  font-family: 'Noto Sans TC', sans-serif;
+  font-size: 11.5px;
+  color: var(--ink-soft);
+  margin-top: 8px;
+  letter-spacing: 0.05em;
+}
+
+/* ---------- Stage cards ---------- */
+.stages{ padding: 28px 20px 0; }
+
+.card{
+  position: relative;
+  background: var(--paper-light);
+  border: 1px solid var(--line);
+  border-radius: 2px;
+  margin-bottom: 18px;
+  padding: 22px 22px 24px;
+  box-shadow: 0 1px 0 rgba(0,0,0,0.04);
+}
+.card.locked{
+  background: repeating-linear-gradient(135deg, var(--paper-dark), var(--paper-dark) 10px, var(--paper) 10px, var(--paper) 20px);
+  color: var(--locked);
+}
+.card-top{ display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px; }
+.code{ font-family: 'Zen Kaku Gothic New', sans-serif; font-size: 11px; letter-spacing: 0.15em; color: var(--brass); }
+.card.locked .code{ color: var(--locked); }
+
+.stamp{
+  width: 52px; height: 52px;
+  border: 2px solid var(--seal);
+  border-radius: 50%;
+  color: var(--seal);
+  display: flex; align-items: center; justify-content: center;
+  font-family: 'Zen Kaku Gothic New', sans-serif;
+  font-size: 12px; font-weight: 700; letter-spacing: 0.05em;
+  transform: rotate(-12deg);
+  flex-shrink: 0; opacity: 0.92;
+}
+.lock-icon{
+  width: 40px; height: 40px;
+  border: 1.5px dashed var(--locked);
+  border-radius: 50%;
+  display:flex; align-items:center; justify-content:center;
+  color: var(--locked); font-size: 16px; flex-shrink: 0;
+}
+.card h2{ font-size: clamp(18px,4.5vw,21px); margin: 0 0 6px; color: var(--navy); letter-spacing: 0.02em; }
+.card.locked h2{ color: var(--locked); }
+.card h3{ font-family: 'Noto Sans TC', sans-serif; font-weight: 500; font-size: 13px; margin: 0 0 12px; color: var(--brass); }
+.card.locked h3{ color: var(--locked); }
+.story{ font-family: 'Noto Sans TC', sans-serif; font-size: 14.5px; line-height: 1.95; color: var(--ink); margin: 0 0 16px; }
+.locked-msg{ font-family: 'Noto Sans TC', sans-serif; font-size: 13px; letter-spacing: 0.05em; }
+
+/* ---------- Puzzle widgets ---------- */
+.puzzle{ border-top: 1px dashed var(--line); padding-top: 16px; margin-top: 6px; }
+.puzzle-label{ font-family: 'Zen Kaku Gothic New', sans-serif; font-size: 11.5px; color: var(--seal); letter-spacing: 0.1em; margin-bottom: 8px; }
+.puzzle-prompt{ font-family: 'Noto Sans TC', sans-serif; font-size: 14px; line-height: 1.8; margin: 0 0 12px; }
+.puzzle-btn{ padding: 10px 20px; background: var(--navy); color: var(--paper-light); font-family: 'Noto Sans TC', sans-serif; font-size: 13px; font-weight: 600; letter-spacing: 0.05em; }
+.puzzle-feedback{ font-family: 'Noto Sans TC', sans-serif; font-size: 13px; margin-top: 10px; min-height: 18px; }
+.puzzle-feedback.ok{ color: var(--ok); font-weight: 700; }
+.puzzle-feedback.bad{ color: var(--seal); font-weight: 700; }
+
+.fill-input{ width: 100%; font-family: 'Noto Sans TC', sans-serif; font-size: 15px; padding: 10px 12px; border: 1px solid var(--line); background: var(--paper); color: var(--ink); border-radius: 2px; margin-bottom: 10px; }
+
+.choice-list{ display: flex; flex-direction: column; gap: 8px; margin-bottom: 6px; }
+.choice-opt{ text-align: left; padding: 11px 14px; border: 1px solid var(--line); background: var(--paper); color: var(--ink); font-family: 'Noto Sans TC', sans-serif; font-size: 13.5px; border-radius: 2px; }
+.choice-opt.correct{ border-color: var(--ok); background: #E4EEE0; color: var(--ok); }
+.choice-opt.wrong{ border-color: var(--seal); background: #F3E1DC; color: var(--seal); }
+@media (min-width: 700px){
+  .choice-list{ flex-direction: row; flex-wrap: wrap; }
+  .choice-opt{ flex: 1 1 45%; }
+}
+
+.order-pool{ display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 12px; }
+.order-chip{ padding: 9px 14px; border: 1px solid var(--line); background: var(--paper); color: var(--ink); font-family: 'Noto Sans TC', sans-serif; font-size: 13px; border-radius: 2px; }
+.order-chip:disabled{ opacity: 0.3; }
+.order-answer{ display: flex; flex-wrap: wrap; gap: 6px; min-height: 38px; padding: 8px; border: 1px dashed var(--line); margin-bottom: 10px; font-family: 'Noto Sans TC', sans-serif; font-size: 12.5px; align-items: center; }
+.order-answer span{ padding: 5px 10px; background: var(--navy); color: var(--paper-light); border-radius: 2px; }
+
+.jigsaw-grid{ display: grid; grid-template-columns: repeat(2, 1fr); gap: 3px; width: 100%; max-width: 260px; aspect-ratio: 1; margin: 0 0 12px; border: 1px solid var(--line); padding: 3px; background: var(--paper); }
+.jigsaw-tile{ background-color: var(--navy-light); background-repeat: no-repeat; display: flex; align-items: center; justify-content: center; color: var(--paper-light); font-family: 'Zen Kaku Gothic New', sans-serif; font-size: 22px; font-weight: 700; cursor: pointer; user-select: none; }
+.jigsaw-tile.selected{ outline: 3px solid var(--seal); outline-offset: -3px; }
+
+.swipe-area{ position: relative; height: 130px; margin-bottom: 10px; }
+.swipe-side-label{ position: absolute; top: 50%; transform: translateY(-50%); font-family: 'Noto Sans TC', sans-serif; font-size: 12px; color: var(--ink-soft); width: 68px; }
+.swipe-side-label.left{ left: 0; text-align: left; }
+.swipe-side-label.right{ right: 0; text-align: right; }
+.swipe-card{ position: absolute; left: 74px; right: 74px; top: 0; bottom: 0; background: var(--paper); border: 1px solid var(--line); border-radius: 2px; display: flex; align-items: center; justify-content: center; text-align: center; padding: 12px; font-family: 'Noto Sans TC', sans-serif; font-size: 13.5px; cursor: grab; touch-action: none; }
+@media (min-width: 700px){
+  .swipe-side-label{ width: 100px; font-size: 13px; }
+  .swipe-card{ left: 108px; right: 108px; }
+}
+
+/* ---------- Footer admin link ---------- */
+.admin-link{ text-align: center; padding: 24px 0 0; }
+.admin-link a{ font-family: 'Noto Sans TC', sans-serif; font-size: 11.5px; color: var(--ink-soft); opacity: 0.55; text-decoration: none; letter-spacing: 0.1em; }
+
+/* ---------- Admin view ---------- */
+.admin-wrap{ max-width: 560px; margin: 0 auto; padding: 40px 20px 80px; }
+@media (min-width: 700px){ .admin-wrap{ max-width: 680px; } }
+
+.admin-box{ background: var(--paper-light); border: 1px solid var(--line); padding: 24px 22px; border-radius: 2px; }
+.admin-box h2{ color: var(--navy); font-size: 20px; margin: 0 0 4px; }
+.admin-box p.small{ font-family: 'Noto Sans TC', sans-serif; font-size: 12.5px; color: var(--ink-soft); margin: 0 0 18px; }
+
+input[type=password], input[type=text], textarea, select{
+  width: 100%; font-family: 'Noto Sans TC', sans-serif; font-size: 14.5px; padding: 10px 12px;
+  border: 1px solid var(--line); background: var(--paper); color: var(--ink); border-radius: 2px; margin-bottom: 4px;
+}
+textarea{ resize: vertical; min-height: 52px; font-family: 'Noto Sans TC', sans-serif; }
+.field-label{ font-family: 'Noto Sans TC', sans-serif; font-size: 12.5px; color: var(--ink-soft); margin: 14px 0 4px; font-weight: 600; }
+.field-counter{ font-family: 'Noto Sans TC', sans-serif; font-size: 10.5px; color: var(--locked); text-align: right; margin-bottom: 8px; }
+.field-counter.warn{ color: var(--seal); }
+
+button{ font-family: 'Noto Sans TC', sans-serif; font-size: 14px; border: none; cursor: pointer; border-radius: 2px; transition: opacity 0.2s; }
+button:hover{ opacity: 0.85; }
+.btn-primary{ width: 100%; padding: 13px; background: var(--navy); color: var(--paper-light); font-weight: 600; letter-spacing: 0.05em; }
+.btn-save{ padding: 12px 22px; background: var(--seal); color: var(--paper-light); font-weight: 700; letter-spacing: 0.05em; margin-top: 18px; }
+
+.tab-bar{ display: flex; gap: 8px; margin-bottom: 18px; }
+.tab-btn{ flex: 1; padding: 11px; background: var(--paper-dark); color: var(--ink-soft); font-family: 'Noto Sans TC', sans-serif; font-size: 13px; font-weight: 600; letter-spacing: 0.03em; }
+.tab-btn.active{ background: var(--navy); color: var(--paper-light); }
+
+.stage-control{ display: flex; align-items: center; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid var(--line); font-family: 'Noto Sans TC', sans-serif; font-size: 14px; }
+.stage-control:last-child{ border-bottom: none; }
+.stage-control .lbl{ color: var(--ink); }
+.stage-control .lbl.active{ color: var(--seal); font-weight: 700; }
+.toggle-btn{ padding: 6px 16px; font-size: 12.5px; background: var(--paper-dark); color: var(--ink-soft); }
+.toggle-btn.on{ background: var(--seal); color: var(--paper-light); }
+.quick-row{ display:flex; gap: 10px; margin-top: 18px; }
+.quick-row button{ flex:1; padding: 10px; background: var(--paper-dark); color: var(--ink); font-size: 12.5px; }
+.status-line{ font-family: 'Noto Sans TC', sans-serif; font-size: 11.5px; color: var(--ink-soft); text-align: center; margin-top: 18px; }
+.err{ font-family: 'Noto Sans TC', sans-serif; color: var(--seal); font-size: 12.5px; margin: -6px 0 12px; }
+.saved-msg{ font-family: 'Noto Sans TC', sans-serif; color: var(--ok); font-size: 12.5px; margin-top: 10px; font-weight: 700; }
+
+.stage-select-row{ display: flex; gap: 6px; overflow-x: auto; padding-bottom: 10px; margin-bottom: 6px; }
+.stage-select-btn{ flex-shrink: 0; padding: 8px 14px; background: var(--paper-dark); color: var(--ink-soft); font-family: 'Noto Sans TC', sans-serif; font-size: 12.5px; white-space: nowrap; }
+.stage-select-btn.active{ background: var(--seal); color: var(--paper-light); }
+
+.puzzle-field-group{ border: 1px dashed var(--line); padding: 12px; margin-top: 10px; border-radius: 2px; }
+</style>
+</head>
+<body>
+<div id="app"></div>
+
+<script>
+/* ===================== Data ===================== */
+const DEFAULT_STAGES = [
+  { code:"序　文", title:"湯德章紀念公園", sub:"一個圓環，府城的心臟地帶",
+    story:"腳下這座圓環，日治時期是市街改正計畫的核心。四面延伸出去的道路，串起消防、行政、議會、治安幾座建築，像心臟牽動整座城市的日常運作。",
+    puzzleType:"none", puzzle:{} },
+  { code:"第一站", title:"合同廳舍", sub:"一座望向全城的高塔",
+    story:"沒有電話的年代，值班人員得登高遠望，一發現異狀立刻搖鈴示警。這座樓後來也成為警消單位共同辦公的地方，一棟建築，守著兩種任務。",
+    puzzleType:"fill",
+    puzzle:{ prompt:"這座高塔沒有電話可用，只能靠人力登高遠望監看火警，因此被稱為「＿火樓」，請填入缺的那個字。", answer:"望" } },
+  { code:"第二站", title:"台南州廳", sub:"一棟建築見證的行政變化",
+    story:"這棟建築曾是全台南最高的行政機關，行政人員經常需要下鄉核對戶籍，一份份名簿記錄著尋常人家的生活點滴。",
+    puzzleType:"choice",
+    puzzle:{ question:"台南州廳的行政人員，除了辦公之外，經常需要下鄉做什麼工作？",
+      options:["核對戶籍調查","販賣農產品","訓練軍隊","建造橋樑"], correctIndex:0 } },
+  { code:"第三站", title:"台南州會", sub:"一座天橋連起的兩棟樓",
+    story:"州廳與這棟建築之間有一座相連的天橋。這裡曾是地方議會，議員一半官派、一半民選，是地方自治很早期的一次嘗試。",
+    puzzleType:"order",
+    puzzle:{ instruction:"請按時間先後，點選建立這棟建築身分轉變的過程。",
+      items:["台南州廳","空軍供應司令部","台南市政府","國立台灣文學館"] } },
+  { code:"第四站", title:"台南警察署（南美館）", sub:"一棟樓的日常百態",
+    story:"這棟建築在1931年落成，曾是全台南治安體系的核心。值班的日常、同僚間的閒聊，構成了這裡最真實的樣貌。",
+    puzzleType:"jigsaw",
+    puzzle:{ instruction:"老照片被打散了，動動手指把它拼回原本的樣子吧（點兩塊交換位置）。", imageUrl:"" } },
+  { code:"第五站", title:"武德殿", sub:"道場裡的吆喝聲",
+    story:"想像這座道場裡，學生與警察一起練柔道、劍道的畫面。教官的口令、學員的汗水，是那個年代對紀律的重視。",
+    puzzleType:"swipe",
+    puzzle:{ instruction:"當年武德殿是警察和學生共用的訓練場地，對嗎？", leftLabel:"不對", rightLabel:"沒錯", correctDirection:"right" } },
+  { code:"結　語", title:"回到公園", sub:"走過一圈，看見一座城市的樣子",
+    story:"消防、行政、議會、治安、教育——這幾種城市機能原本各自運作，卻共同撐起了府城居民的日常生活，也留下了今天的樣貌。",
+    puzzleType:"none", puzzle:{} }
+];
+
+const UNLOCK_KEY = "tainan-walk-unlock-state";
+const CONTENT_KEY = "tainan-walk-content-v2";
+const ADMIN_PASSWORD = "1030";
+const MAXLEN = 150;
+
+let STAGES = JSON.parse(JSON.stringify(DEFAULT_STAGES));
+
+async function loadContent(){
+  try{
+    const res = await window.storage.get(CONTENT_KEY, true);
+    if(res && res.value){
+      const parsed = JSON.parse(res.value);
+      if(Array.isArray(parsed) && parsed.length === DEFAULT_STAGES.length){
+        STAGES = parsed;
+        return;
+      }
+    }
+  }catch(e){ /* fall back to default */ }
+  STAGES = JSON.parse(JSON.stringify(DEFAULT_STAGES));
+}
+
+async function saveContent(){
+  try{ await window.storage.set(CONTENT_KEY, JSON.stringify(STAGES), true); }
+  catch(e){ console.error("Storage error:", e); }
+}
+
+async function getUnlockedStage(){
+  try{
+    const res = await window.storage.get(UNLOCK_KEY, true);
+    if(res && res.value != null){
+      const parsed = JSON.parse(res.value);
+      return typeof parsed.stage === "number" ? parsed.stage : 0;
+    }
+    return 0;
+  }catch(e){ return 0; }
+}
+async function setUnlockedStage(n){
+  try{ await window.storage.set(UNLOCK_KEY, JSON.stringify({stage:n}), true); }
+  catch(e){ console.error("Storage error:", e); }
+}
+
+function esc(s){
+  return String(s || "").replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+function shuffle(arr){
+  const a = arr.slice();
+  for(let i=a.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; }
+  return a;
+}
+
+/* ===================== Puzzle rendering (participant) ===================== */
+function renderPuzzleHTML(stage, idx){
+  const p = stage.puzzle || {};
+  switch(stage.puzzleType){
+    case "fill":
+      return `
+        <div class="puzzle" data-type="fill" data-idx="${idx}">
+          <div class="puzzle-label">✏️ 填字挑戰</div>
+          <p class="puzzle-prompt">${esc(p.prompt)}</p>
+          <input type="text" class="fill-input" id="fill-in-${idx}" placeholder="輸入答案" maxlength="150">
+          <button class="puzzle-btn" id="fill-btn-${idx}">送出</button>
+          <div class="puzzle-feedback" id="fill-fb-${idx}"></div>
+        </div>`;
+    case "choice":
+      const opts = (p.options||[]).filter(o=>o && o.trim()!=="");
+      return `
+        <div class="puzzle" data-type="choice" data-idx="${idx}">
+          <div class="puzzle-label">☑️ 選擇題</div>
+          <p class="puzzle-prompt">${esc(p.question)}</p>
+          <div class="choice-list" id="choice-list-${idx}">
+            ${opts.map((o,i)=>`<button class="choice-opt" data-i="${i}">${esc(o)}</button>`).join("")}
+          </div>
+          <div class="puzzle-feedback" id="choice-fb-${idx}"></div>
+        </div>`;
+    case "order":
+      const items = (p.items||[]).filter(o=>o && o.trim()!=="");
+      const order = shuffle(items.map((t,i)=>({t,i})));
+      return `
+        <div class="puzzle" data-type="order" data-idx="${idx}">
+          <div class="puzzle-label">🔢 排序挑戰</div>
+          <p class="puzzle-prompt">${esc(p.instruction)}</p>
+          <div class="order-answer" id="order-answer-${idx}"></div>
+          <div class="order-pool" id="order-pool-${idx}">
+            ${order.map(o=>`<button class="order-chip" data-val="${esc(o.t)}">${esc(o.t)}</button>`).join("")}
+          </div>
+          <button class="puzzle-btn" id="order-reset-${idx}" style="background:var(--paper-dark);color:var(--ink-soft);">重來</button>
+          <div class="puzzle-feedback" id="order-fb-${idx}"></div>
+        </div>`;
+    case "jigsaw":
+      return `
+        <div class="puzzle" data-type="jigsaw" data-idx="${idx}">
+          <div class="puzzle-label">🧩 簡易拼圖</div>
+          <p class="puzzle-prompt">${esc(p.instruction)}</p>
+          <div class="jigsaw-grid" id="jigsaw-${idx}"></div>
+          <div class="puzzle-feedback" id="jigsaw-fb-${idx}"></div>
+        </div>`;
+    case "swipe":
+      return `
+        <div class="puzzle" data-type="swipe" data-idx="${idx}">
+          <div class="puzzle-label">👉 滑動挑戰</div>
+          <p class="puzzle-prompt">${esc(p.instruction)}</p>
+          <div class="swipe-area" id="swipe-area-${idx}">
+            <div class="swipe-side-label left">⬅ ${esc(p.leftLabel)}</div>
+            <div class="swipe-side-label right">${esc(p.rightLabel)} ➡</div>
+            <div class="swipe-card" id="swipe-card-${idx}">向左或向右滑動這張卡片</div>
+          </div>
+          <div class="puzzle-feedback" id="swipe-fb-${idx}"></div>
+        </div>`;
+    default: return "";
+  }
+}
+
+function attachPuzzleLogic(stage, idx){
+  const p = stage.puzzle || {};
+  if(stage.puzzleType === "fill"){
+    const btn = document.getElementById(`fill-btn-${idx}`);
+    if(!btn) return;
+    btn.onclick = () => {
+      const val = document.getElementById(`fill-in-${idx}`).value.trim();
+      const fb = document.getElementById(`fill-fb-${idx}`);
+      if(val === String(p.answer||"").trim()){ fb.textContent = "✅ 答對了！"; fb.className = "puzzle-feedback ok"; }
+      else{ fb.textContent = "❌ 再想想看"; fb.className = "puzzle-feedback bad"; }
+    };
+  }
+  if(stage.puzzleType === "choice"){
+    const list = document.getElementById(`choice-list-${idx}`);
+    if(!list) return;
+    list.querySelectorAll(".choice-opt").forEach(btn=>{
+      btn.onclick = () => {
+        const i = parseInt(btn.dataset.i,10);
+        const fb = document.getElementById(`choice-fb-${idx}`);
+        list.querySelectorAll(".choice-opt").forEach(b=>b.classList.remove("correct","wrong"));
+        if(i === p.correctIndex){ btn.classList.add("correct"); fb.textContent = "✅ 答對了！"; fb.className = "puzzle-feedback ok"; }
+        else{ btn.classList.add("wrong"); fb.textContent = "❌ 再選一次看看"; fb.className = "puzzle-feedback bad"; }
+      };
+    });
+  }
+  if(stage.puzzleType === "order"){
+    const pool = document.getElementById(`order-pool-${idx}`);
+    const answer = document.getElementById(`order-answer-${idx}`);
+    const fb = document.getElementById(`order-fb-${idx}`);
+    const resetBtn = document.getElementById(`order-reset-${idx}`);
+    if(!pool) return;
+    const correct = (p.items||[]).filter(o=>o && o.trim()!=="");
+    let picked = [];
+    function renderAnswer(){ answer.innerHTML = picked.map(t=>`<span>${esc(t)}</span>`).join(""); }
+    function checkDone(){
+      if(picked.length === correct.length){
+        const isCorrect = picked.every((v,i)=>v===correct[i]);
+        if(isCorrect){ fb.textContent = "✅ 順序正確！"; fb.className = "puzzle-feedback ok"; }
+        else{ fb.textContent = "❌ 順序不太對，按重來再試一次"; fb.className = "puzzle-feedback bad"; }
+      }
+    }
+    pool.querySelectorAll(".order-chip").forEach(chip=>{
+      chip.onclick = () => {
+        if(chip.disabled) return;
+        picked.push(chip.dataset.val);
+        chip.disabled = true;
+        renderAnswer();
+        checkDone();
+      };
+    });
+    resetBtn.onclick = () => {
+      picked = [];
+      renderAnswer();
+      fb.textContent = ""; fb.className = "puzzle-feedback";
+      pool.querySelectorAll(".order-chip").forEach(c=>c.disabled=false);
+    };
+  }
+  if(stage.puzzleType === "jigsaw"){
+    const grid = document.getElementById(`jigsaw-${idx}`);
+    const fb = document.getElementById(`jigsaw-fb-${idx}`);
+    if(!grid) return;
+    const positions = shuffle([0,1,2,3]);
+    let selected = null;
+    const hasImage = p.imageUrl && p.imageUrl.trim() !== "";
+    function coordFor(n){ const col = n % 2, row = Math.floor(n/2); return `${col*100}% ${row*100}%`; }
+    function draw(){
+      grid.innerHTML = "";
+      positions.forEach((origIdx, slot) => {
+        const tile = document.createElement("div");
+        tile.className = "jigsaw-tile";
+        tile.dataset.slot = slot;
+        if(hasImage){
+          tile.style.backgroundImage = `url('${p.imageUrl}')`;
+          tile.style.backgroundSize = "200% 200%";
+          tile.style.backgroundPosition = coordFor(origIdx);
+        }else{
+          tile.textContent = (origIdx+1);
+        }
+        tile.onclick = () => onTileClick(slot);
+        grid.appendChild(tile);
+      });
+    }
+    function onTileClick(slot){
+      const tiles = grid.querySelectorAll(".jigsaw-tile");
+      if(selected === null){ selected = slot; tiles[slot].classList.add("selected"); return; }
+      if(selected === slot){ tiles[slot].classList.remove("selected"); selected = null; return; }
+      const tmp = positions[selected];
+      positions[selected] = positions[slot];
+      positions[slot] = tmp;
+      selected = null;
+      draw();
+      if(positions.every((v,i)=>v===i)){ fb.textContent = "✅ 拼對了！"; fb.className = "puzzle-feedback ok"; }
+      else{ fb.textContent = ""; fb.className = "puzzle-feedback"; }
+    }
+    draw();
+  }
+  if(stage.puzzleType === "swipe"){
+    const card = document.getElementById(`swipe-card-${idx}`);
+    const fb = document.getElementById(`swipe-fb-${idx}`);
+    if(!card) return;
+    let startX = 0, dx = 0, dragging = false;
+    card.addEventListener("pointerdown", e => { dragging = true; startX = e.clientX; card.setPointerCapture(e.pointerId); card.style.transition = "none"; });
+    card.addEventListener("pointermove", e => {
+      if(!dragging) return;
+      dx = e.clientX - startX;
+      card.style.transform = `translateX(${dx}px) rotate(${dx/20}deg)`;
+    });
+    function endDrag(){
+      if(!dragging) return;
+      dragging = false;
+      card.style.transition = "transform 0.3s ease";
+      if(Math.abs(dx) > 70){
+        const dir = dx > 0 ? "right" : "left";
+        card.style.transform = `translateX(${dx>0?400:-400}px) rotate(${dx/20}deg)`;
+        setTimeout(()=>{
+          if(dir === p.correctDirection){ fb.textContent = "✅ 答對了！"; fb.className = "puzzle-feedback ok"; }
+          else{ fb.textContent = "❌ 再試一次"; fb.className = "puzzle-feedback bad"; }
+          card.style.transition = "none";
+          card.style.transform = "translateX(0) rotate(0)";
+        }, 280);
+      }else{
+        card.style.transform = "translateX(0) rotate(0)";
+      }
+      dx = 0;
+    }
+    card.addEventListener("pointerup", endDrag);
+    card.addEventListener("pointercancel", endDrag);
+  }
+}
+
+/* ===================== Participant view ===================== */
+function renderParticipant(unlocked){
+  const total = STAGES.length;
+  const pct = Math.round((unlocked/(total-1))*100);
+  const cards = STAGES.map((s,i)=>{
+    const isUnlocked = i <= unlocked;
+    if(isUnlocked){
+      return `
+        <div class="card">
+          <div class="card-top">
+            <span class="code">${esc(s.code)}</span>
+            <div class="stamp">已開放</div>
+          </div>
+          <h2>${esc(s.title)}</h2>
+          <h3>${esc(s.sub)}</h3>
+          <p class="story">${esc(s.story)}</p>
+          ${renderPuzzleHTML(s,i)}
+        </div>`;
+    }
+    return `
+      <div class="card locked">
+        <div class="card-top">
+          <span class="code">${esc(s.code)}</span>
+          <div class="lock-icon">🔒</div>
+        </div>
+        <h2>${esc(s.title)}</h2>
+        <p class="locked-msg">尚未開放，請等候主辦者解鎖這一站</p>
+      </div>`;
+  }).join("");
+
+  document.getElementById("app").innerHTML = `
+    <div class="wrap">
+      <header>
+        <div class="eyebrow">TAINAN COLONIAL BUILDINGS WALK</div>
+        <h1>府城行走</h1>
+        <div class="sub">官署建築巡禮・跟著故事走過這座城市的日常</div>
+        <div class="progress-bar"><div class="progress-fill" style="width:${pct}%"></div></div>
+        <div class="progress-label">目前開放到　第 ${unlocked+1} / ${total} 站</div>
+      </header>
+      <div class="stages">${cards}</div>
+      <div class="admin-link"><a href="#admin">主辦者入口</a></div>
+    </div>`;
+
+  STAGES.forEach((s,i)=>{ if(i<=unlocked) attachPuzzleLogic(s,i); });
+}
+
+/* ===================== Admin: login ===================== */
+function renderAdminLogin(errMsg){
+  document.getElementById("app").innerHTML = `
+    <div class="admin-wrap">
+      <div class="admin-box">
+        <h2>現場控制台</h2>
+        <p class="small">輸入密碼以管理解鎖進度與內容</p>
+        ${errMsg ? `<div class="err">${errMsg}</div>` : ""}
+        <input type="password" id="pwInput" placeholder="請輸入密碼">
+        <button class="btn-primary" id="loginBtn">登入</button>
+      </div>
+      <div class="admin-link" style="margin-top:16px;"><a href="#">回到參加者畫面</a></div>
+    </div>`;
+  document.getElementById("loginBtn").onclick = () => {
+    const val = document.getElementById("pwInput").value;
+    if(val === ADMIN_PASSWORD){ sessionStorage.setItem("tour-admin-auth","1"); route(); }
+    else{ renderAdminLogin("密碼錯誤，請再試一次"); }
+  };
+  document.getElementById("pwInput").addEventListener("keydown", e => { if(e.key==="Enter") document.getElementById("loginBtn").click(); });
+}
+
+/* ===================== Admin: unlock tab ===================== */
+function unlockTabHTML(unlocked){
+  const rows = STAGES.map((s,i)=>`
+    <div class="stage-control">
+      <span class="lbl ${i===unlocked?'active':''}">${esc(s.code)}．${esc(s.title)}</span>
+      <button class="toggle-btn ${i<=unlocked?'on':''}" data-idx="${i}">${i<=unlocked?'已開放':'解鎖'}</button>
+    </div>`).join("");
+  return `
+    <p class="small">依現場解謎狀況，點選要開放到第幾站，所有參加者的畫面會自動同步</p>
+    ${rows}
+    <div class="quick-row">
+      <button id="resetBtn">全部鎖回序文</button>
+      <button id="openAllBtn">全部開放</button>
+    </div>
+    <div class="status-line">目前開放到　第 ${unlocked+1} / ${STAGES.length} 站</div>`;
+}
+function attachUnlockTabEvents(rerender){
+  document.querySelectorAll(".toggle-btn").forEach(btn=>{
+    btn.onclick = async () => { const i=parseInt(btn.dataset.idx,10); await setUnlockedStage(i); rerender(); };
+  });
+  const resetBtn = document.getElementById("resetBtn");
+  const openAllBtn = document.getElementById("openAllBtn");
+  if(resetBtn) resetBtn.onclick = async () => { await setUnlockedStage(0); rerender(); };
+  if(openAllBtn) openAllBtn.onclick = async () => { const last=STAGES.length-1; await setUnlockedStage(last); rerender(); };
+}
+
+/* ===================== Admin: content editor tab ===================== */
+function counterHTML(id, text){
+  const len = (text||"").length;
+  return `<div class="field-counter ${len>=MAXLEN?'warn':''}" id="${id}">${len} / ${MAXLEN}</div>`;
+}
+function attachCounter(inputEl, counterEl){
+  inputEl.addEventListener("input", () => {
+    const len = inputEl.value.length;
+    counterEl.textContent = `${len} / ${MAXLEN}`;
+    counterEl.classList.toggle("warn", len >= MAXLEN);
+  });
+}
+
+function puzzleFieldsHTML(stage){
+  const p = stage.puzzle || {};
+  const type = stage.puzzleType;
+  if(type === "fill"){
+    return `
+      <div class="puzzle-field-group">
+        <div class="field-label">題目敘述</div>
+        <textarea maxlength="150" id="pf-prompt">${esc(p.prompt)}</textarea>
+        ${counterHTML("pf-prompt-c", p.prompt)}
+        <div class="field-label">正確答案</div>
+        <input type="text" maxlength="150" id="pf-answer" value="${esc(p.answer)}">
+        ${counterHTML("pf-answer-c", p.answer)}
+      </div>`;
+  }
+  if(type === "choice"){
+    const opts = p.options||["","","",""];
+    while(opts.length<4) opts.push("");
+    return `
+      <div class="puzzle-field-group">
+        <div class="field-label">題目</div>
+        <textarea maxlength="150" id="pf-question">${esc(p.question)}</textarea>
+        ${counterHTML("pf-question-c", p.question)}
+        ${[0,1,2,3].map(i=>`
+          <div class="field-label">選項 ${i+1}</div>
+          <input type="text" maxlength="150" id="pf-opt-${i}" value="${esc(opts[i])}">
+        `).join("")}
+        <div class="field-label">正確答案是第幾個選項？</div>
+        <select id="pf-correct">
+          ${[0,1,2,3].map(i=>`<option value="${i}" ${p.correctIndex===i?"selected":""}>選項 ${i+1}</option>`).join("")}
+        </select>
+      </div>`;
+  }
+  if(type === "order"){
+    const items = p.items||["","","",""];
+    while(items.length<4) items.push("");
+    return `
+      <div class="puzzle-field-group">
+        <div class="field-label">操作說明</div>
+        <textarea maxlength="150" id="pf-instruction">${esc(p.instruction)}</textarea>
+        ${counterHTML("pf-instruction-c", p.instruction)}
+        <div class="field-label">正確順序（由上到下依序填寫，第一個先發生）</div>
+        ${[0,1,2,3].map(i=>`<input type="text" maxlength="150" id="pf-item-${i}" value="${esc(items[i])}" placeholder="項目 ${i+1}">`).join("")}
+      </div>`;
+  }
+  if(type === "jigsaw"){
+    return `
+      <div class="puzzle-field-group">
+        <div class="field-label">操作說明</div>
+        <textarea maxlength="150" id="pf-instruction">${esc(p.instruction)}</textarea>
+        ${counterHTML("pf-instruction-c", p.instruction)}
+        <div class="field-label">圖片網址（留空則顯示數字拼塊）</div>
+        <input type="text" maxlength="150" id="pf-image" value="${esc(p.imageUrl)}" placeholder="https://...">
+        ${counterHTML("pf-image-c", p.imageUrl)}
+      </div>`;
+  }
+  if(type === "swipe"){
+    return `
+      <div class="puzzle-field-group">
+        <div class="field-label">題目敘述</div>
+        <textarea maxlength="150" id="pf-instruction">${esc(p.instruction)}</textarea>
+        ${counterHTML("pf-instruction-c", p.instruction)}
+        <div class="field-label">向左滑動代表</div>
+        <input type="text" maxlength="150" id="pf-left" value="${esc(p.leftLabel)}">
+        <div class="field-label">向右滑動代表</div>
+        <input type="text" maxlength="150" id="pf-right" value="${esc(p.rightLabel)}">
+        <div class="field-label">正確方向</div>
+        <select id="pf-dir">
+          <option value="left" ${p.correctDirection==="left"?"selected":""}>向左滑</option>
+          <option value="right" ${p.correctDirection==="right"?"selected":""}>向右滑</option>
+        </select>
+      </div>`;
+  }
+  return `<p class="small" style="margin-top:10px;">此站不含互動遊戲。</p>`;
+}
+
+function collectPuzzleFromForm(type){
+  if(type === "fill"){
+    return { prompt: document.getElementById("pf-prompt").value, answer: document.getElementById("pf-answer").value };
+  }
+  if(type === "choice"){
+    return {
+      question: document.getElementById("pf-question").value,
+      options: [0,1,2,3].map(i=>document.getElementById(`pf-opt-${i}`).value),
+      correctIndex: parseInt(document.getElementById("pf-correct").value,10)
+    };
+  }
+  if(type === "order"){
+    return { instruction: document.getElementById("pf-instruction").value, items: [0,1,2,3].map(i=>document.getElementById(`pf-item-${i}`).value) };
+  }
+  if(type === "jigsaw"){
+    return { instruction: document.getElementById("pf-instruction").value, imageUrl: document.getElementById("pf-image").value };
+  }
+  if(type === "swipe"){
+    return {
+      instruction: document.getElementById("pf-instruction").value,
+      leftLabel: document.getElementById("pf-left").value,
+      rightLabel: document.getElementById("pf-right").value,
+      correctDirection: document.getElementById("pf-dir").value
+    };
+  }
+  return {};
+}
+
+function contentTabHTML(selectedIdx){
+  const s = STAGES[selectedIdx];
+  const tabs = STAGES.map((st,i)=>`<button class="stage-select-btn ${i===selectedIdx?'active':''}" data-i="${i}">${esc(st.code)}</button>`).join("");
+  return `
+    <p class="small">每個欄位最多 150 字，修改完畢請按下方「儲存這一站」</p>
+    <div class="stage-select-row">${tabs}</div>
+
+    <div class="field-label">站別代碼</div>
+    <input type="text" maxlength="150" id="ed-code" value="${esc(s.code)}">
+    ${counterHTML("ed-code-c", s.code)}
+
+    <div class="field-label">標題</div>
+    <input type="text" maxlength="150" id="ed-title" value="${esc(s.title)}">
+    ${counterHTML("ed-title-c", s.title)}
+
+    <div class="field-label">副標</div>
+    <input type="text" maxlength="150" id="ed-sub" value="${esc(s.sub)}">
+    ${counterHTML("ed-sub-c", s.sub)}
+
+    <div class="field-label">故事內文</div>
+    <textarea maxlength="150" id="ed-story" style="min-height:90px;">${esc(s.story)}</textarea>
+    ${counterHTML("ed-story-c", s.story)}
+
+    <div class="field-label">互動遊戲類型</div>
+    <select id="ed-type">
+      <option value="none" ${s.puzzleType==="none"?"selected":""}>不使用互動遊戲</option>
+      <option value="fill" ${s.puzzleType==="fill"?"selected":""}>填字詞</option>
+      <option value="choice" ${s.puzzleType==="choice"?"selected":""}>選項</option>
+      <option value="order" ${s.puzzleType==="order"?"selected":""}>點選排序</option>
+      <option value="jigsaw" ${s.puzzleType==="jigsaw"?"selected":""}>簡易拼圖</option>
+      <option value="swipe" ${s.puzzleType==="swipe"?"selected":""}>手指滑動</option>
+    </select>
+
+    <div id="pf-container">${puzzleFieldsHTML(s)}</div>
+
+    <button class="btn-save" id="saveStageBtn">儲存這一站</button>
+    <div id="savedMsg"></div>`;
+}
+
+function bindAllCounters(){
+  document.querySelectorAll('input[maxlength], textarea[maxlength]').forEach(el=>{
+    const cEl = document.getElementById(el.id + "-c");
+    if(cEl) attachCounter(el, cEl);
+  });
+}
+
+function attachContentTabEvents(selectedIdx, rerender){
+  document.querySelectorAll(".stage-select-btn").forEach(btn=>{
+    btn.onclick = () => rerender(parseInt(btn.dataset.i,10));
+  });
+  bindAllCounters();
+
+  document.getElementById("ed-type").onchange = (e) => {
+    STAGES[selectedIdx].puzzleType = e.target.value;
+    if(!STAGES[selectedIdx].puzzle) STAGES[selectedIdx].puzzle = {};
+    document.getElementById("pf-container").innerHTML = puzzleFieldsHTML(STAGES[selectedIdx]);
+    bindAllCounters();
+  };
+
+  document.getElementById("saveStageBtn").onclick = async () => {
+    const stage = STAGES[selectedIdx];
+    stage.code = document.getElementById("ed-code").value.slice(0,MAXLEN);
+    stage.title = document.getElementById("ed-title").value.slice(0,MAXLEN);
+    stage.sub = document.getElementById("ed-sub").value.slice(0,MAXLEN);
+    stage.story = document.getElementById("ed-story").value.slice(0,MAXLEN);
+    stage.puzzleType = document.getElementById("ed-type").value;
+    stage.puzzle = collectPuzzleFromForm(stage.puzzleType);
+    await saveContent();
+    const msg = document.getElementById("savedMsg");
+    msg.innerHTML = `<div class="saved-msg">已儲存這一站的內容</div>`;
+    setTimeout(()=>{ if(msg) msg.innerHTML=""; }, 2500);
+  };
+}
+
+/* ===================== Admin: panel with tabs ===================== */
+let adminTab = "unlock";
+let adminSelectedStage = 0;
+
+async function renderAdminPanel(){
+  const unlocked = await getUnlockedStage();
+  const body = adminTab === "unlock" ? unlockTabHTML(unlocked) : contentTabHTML(adminSelectedStage);
+
+  document.getElementById("app").innerHTML = `
+    <div class="admin-wrap">
+      <div class="admin-box">
+        <h2>現場控制台</h2>
+        <div class="tab-bar">
+          <button class="tab-btn ${adminTab==='unlock'?'active':''}" id="tabUnlock">解鎖控制</button>
+          <button class="tab-btn ${adminTab==='content'?'active':''}" id="tabContent">內容與謎題編輯</button>
+        </div>
+        <div id="tabBody">${body}</div>
+      </div>
+      <div class="admin-link" style="margin-top:16px;"><a href="#" id="logoutLink">登出並回到參加者畫面</a></div>
+    </div>`;
+
+  document.getElementById("tabUnlock").onclick = () => { adminTab="unlock"; renderAdminPanel(); };
+  document.getElementById("tabContent").onclick = () => { adminTab="content"; renderAdminPanel(); };
+  document.getElementById("logoutLink").onclick = (e) => {
+    e.preventDefault(); sessionStorage.removeItem("tour-admin-auth"); window.location.hash=""; route();
+  };
+
+  if(adminTab === "unlock"){
+    attachUnlockTabEvents(()=>{ renderAdminPanel(); });
+  }else{
+    attachContentTabEvents(adminSelectedStage, (i)=>{ adminSelectedStage=i; renderAdminPanel(); });
+  }
+}
+
+/* ===================== Router ===================== */
+let pollTimer = null;
+
+async function route(){
+  if(pollTimer) clearInterval(pollTimer);
+  await loadContent();
+
+  if(window.location.hash === "#admin"){
+    if(sessionStorage.getItem("tour-admin-auth") === "1"){ renderAdminPanel(); }
+    else{ renderAdminLogin(null); }
+  }else{
+    const unlocked = await getUnlockedStage();
+    renderParticipant(unlocked);
+    pollTimer = setInterval(async () => {
+      if(window.location.hash === "#admin") return;
+      await loadContent();
+      const u = await getUnlockedStage();
+      renderParticipant(u);
+    }, 4000);
+  }
+}
+
+window.addEventListener("hashchange", route);
+route();
+</script>
+</body>
+</html>
